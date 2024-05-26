@@ -24,6 +24,39 @@ define_chrono_macro_name = "DEF_CHRONO"
 open_chrono_macro_name = "OPEN_CHRONO"
 close_chrono_macro_name = "CLOSE_CHRONO"
 
+def to_tabs(s):
+	return s
+	
+	# messes up the right bit
+	# try 1
+	return s.replace(" " * tab_width, "\t")
+	# try 2
+	lines = s.split('\n')
+	converted_lines = []
+
+	for line in lines:
+		new_line = ""
+		space_count = 0
+
+		for char in line:
+			if char == ' ':
+				space_count += 1
+				if space_count == tab_width:
+					new_line += '\t'
+					space_count = 0
+			else:
+				if space_count > 0:
+					new_line += ' ' * space_count
+					space_count = 0
+				new_line += char
+
+		if space_count > 0:
+			new_line += ' ' * space_count
+
+		converted_lines.append(new_line)
+
+	return '\n'.join(converted_lines)
+
 class File:
 	def __init__(self, content, functions):
 		self.content = content
@@ -31,7 +64,13 @@ class File:
 		self.preamble = ""
 
 	def add_profiling(self):
-		self.preamble = f"\n#define {define_chrono_macro_name}(chrono_id) std::chrono::time_point<std::chrono::high_resolution_clock> st##chrono_id; double stet##chrono_id = 0; double stet##chrono_id##_hits = 0;\n#define {open_chrono_macro_name}(chrono_id) st##chrono_id = std::chrono::high_resolution_clock::now();\n#define {close_chrono_macro_name}(chrono_id) std::chrono::duration<double, std::milli> elapsed##chrono_id = std::chrono::high_resolution_clock::now() - st##chrono_id; stet##chrono_id += elapsed##chrono_id##.count(); stet##chrono_id##_hits++;\n"
+		self.preamble = f"""
+// THIS FILE IS AUTO GENERATED, EVERYTHING WRITTEN HERE WILL BE OVERWRITTEN
+
+#define {define_chrono_macro_name}(line_number) std::chrono::time_point<std::chrono::high_resolution_clock> st##line_number; double stet##line_number = 0; double stet##line_number##_hits = 0;
+#define {open_chrono_macro_name}(line_number) st##line_number = std::chrono::high_resolution_clock::now();
+#define {close_chrono_macro_name}(line_number) std::chrono::duration<double, std::milli> elapsed##line_number = std::chrono::high_resolution_clock::now() - st##line_number; stet##line_number += elapsed##line_number##.count(); stet##line_number##_hits++;
+"""
 		line_number_offset = self.preamble.count("\n") + len(self.functions) + preamble_spacing
 		for f in self.functions:
 			f.update_line_numbers(line_number_offset)
@@ -81,7 +120,7 @@ class Function:
 			line.line_number += line_number_offset
 
 	def __repr__(self):
-		return f"{self.decl}{"\n".join(line.txt for line in self.lines)}{self.closing}"
+		return f"{to_tabs(self.decl)}{"\n".join(str(line) for line in self.lines)}{to_tabs(self.closing)}"
 
 	def __len__(self):
 		return len(self.__repr__())
@@ -105,7 +144,7 @@ class Line:
 		self.txt = f"{" " * len(get_line_prefix())}{self.txt}" if self.ignore else f"{get_line_prefix(self.line_number)}{self.txt}{" " * (max_line_width - (len(f"{get_line_prefix(self.line_number)}{self.txt}")) + nb_space_line_suffix)}{close_chrono_macro_name}({self.line_number})"
 
 	def __repr__(self):
-		return self.txt
+		return to_tabs(self.txt)
 
 	def __len__(self):
 		return len(self.__repr__())
