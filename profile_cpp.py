@@ -1,9 +1,9 @@
 import sys, re, shutil
 
 # LIMITATIONS
-# // @profile is the line just above the function declaration
-# the function declaration is one only one line
-# one line = one statement
+# // @profile must be on the line just above the function declaration
+# function declarations must be one line only
+# one line must equal one statement
 
 # TODO: removing the limitations lol
 # TODO: report entire functions
