@@ -6,6 +6,7 @@ import sys, re, shutil
 # one line = one statement
 
 # TODO: removing the limitations lol
+# TODO: report entire functions
 
 # parameters
 nb_space_line_prefix = 10
