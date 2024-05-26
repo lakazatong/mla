@@ -96,7 +96,6 @@ constexpr unsigned int count_ones(unsigned int n) {
 	return count;
 }
 
-
 // Utils
 // -------------------
 
@@ -332,29 +331,14 @@ meaning we would need to have at least 7 duplicates of any 1x1 item to reach the
 
 */
 
-std::chrono::time_point<std::chrono::high_resolution_clock> st1;
-std::chrono::time_point<std::chrono::high_resolution_clock> st2;
-double stet1 = 0;
-double stet1_hits = 0;
-double stet2 = 0;
-double stet2_hits = 0;
-
 inline void try_adding_cart(Cart& cart, int index) {
 	for (const Cart& existing_cart : all_carts[index]) {
 		if (cart.canonical_form == existing_cart.canonical_form) {
 			return;
 		}
 	}
-	st1 = std::chrono::high_resolution_clock::now();
 	cart.compress_attributes();
-	std::chrono::duration<double, std::milli> elapsed1 = std::chrono::high_resolution_clock::now() - st1;
-	stet1 += elapsed1.count();
-	stet1_hits++;
-	st2 = std::chrono::high_resolution_clock::now();
 	all_carts[index].push_back(cart);
-	std::chrono::duration<double, std::milli> elapsed2 = std::chrono::high_resolution_clock::now() - st2;
-	stet2 += elapsed2.count();
-	stet2_hits++;
 }
 
 inline unsigned int available_items_to_index(const vector<int>& available_items) {
@@ -406,9 +390,6 @@ void generate_all_carts(const vector<int>& available_items) {
 	}
 }
 
-std::chrono::time_point<std::chrono::high_resolution_clock> time_took_start;
-std::chrono::time_point<std::chrono::high_resolution_clock> time_took_end;
-
 // @profile
 void compute_best_carts() {
 	vector<int> available_items;
@@ -416,9 +397,7 @@ void compute_best_carts() {
 		available_items.push_back(i);
 	}
 	// cout << available_items << endl;
-	time_took_start = std::chrono::high_resolution_clock::now();
 	generate_all_carts(available_items);
-	time_took_end = std::chrono::high_resolution_clock::now();
 	vector<Cart>& carts = all_carts[all_carts_length - 1];
 
 	int max_value = 0;
@@ -511,8 +490,7 @@ int main() {
 		cout << cart.to_string() << endl;
 	}
 	*/
-	std::chrono::duration<double, std::milli> elapsed = time_took_end - time_took_start;
-	cout << "nb carts found: " << all_carts[all_carts_length - 1].size() << " (" << elapsed.count() << "ms)" << endl;
-	// REP_CHRONO(383)
-	// REP_CHRONO(427)
+	// REP_CHRONO(388)
+	// REP_CHRONO(419)
+	// REP_CHRONO(generate_all_carts)
 }
