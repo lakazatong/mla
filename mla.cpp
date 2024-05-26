@@ -484,8 +484,8 @@ int main() {
 	all_carts_length = (1U << all_items_length) - 1;
 
 	all_carts.resize(all_carts_length);
-	cout << "all_carts.size() = " << all_carts.size() << endl;
-	cout << "all_carts.capacity() = " << all_carts.capacity() << endl;
+	// cout << "all_carts.size() = " << all_carts.size() << endl;
+	// cout << "all_carts.capacity() = " << all_carts.capacity() << endl;
 	
 	for (int i = 0; i < all_carts_length; i++) {
 		// worst case is when n items are of shape 1x1
@@ -518,6 +518,6 @@ int main() {
 	*/
 	std::chrono::duration<double, std::milli> elapsed = time_took_end - time_took_start;
 	cout << "nb carts found: " << all_carts[all_carts_length - 1].size() << " (" << elapsed.count() << "ms)" << endl;
-	cout << "stet1 total = " << stet1 << "ms " << "(" << stet1_hits << " hits, " << stet1 / stet1_hits << "ms per hit)" << endl;
-	cout << "stet2 total = " << stet2 << "ms " << "(" << stet2_hits << " hits, " << stet2 / stet2_hits << "ms per hit)" << endl;
+	// REP_CHRONO(1)
+	// REP_CHRONO(2)
 }

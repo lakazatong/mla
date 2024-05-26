@@ -9,27 +9,33 @@ nb_space_line_prefix = 10
 nb_space_line_suffix = 30
 tab_width = 4
 preamble_spacing = 2
+define_chrono_macro_name = "DEF_CHRONO"
+open_chrono_macro_name = "OPEN_CHRONO"
+close_chrono_macro_name = "CLOSE_CHRONO"
+report_chrono_macro_name = "REP_CHRONO"
+start_time_string = "st"
+total_elapsed_string = start_time_string + "et" # et for end_time, making "stet" (simple enough to write and pronounce lol)
 
 # string to put before functions to add profiling to
 profile_pattern = re.compile(r"\/\/ @profile\s*\r?\n")
 # lines to ignore
-ignore_bracket_line_pattern = re.compile(r'^\s*[{}]+\s*$')
-ignore_comment_line_pattern = re.compile(r'^\s*//(?:a|[^a])*$')
-ignore_empty_return_line_pattern = re.compile(r'^\s*return;\s*$')
+ignore_bracket_line_pattern = re.compile(r"^\s*[{}]+\s*$")
+ignore_comment_line_pattern = re.compile(r"^\s*//(?:a|[^a])*$")
+ignore_empty_return_line_pattern = re.compile(r"^\s*return;\s*$")
+# since the report macro will be defined later, we ue this regex to uncomment its occurencies
+report_chrono_pattern = re.compile(rf"\/\/ {report_chrono_macro_name}\((\d+)\)")
+# put / move the chrono include at the very top
+# report_chrono_pattern = re.compile(r"#include <chrono>")
 
 max_line_number = 0
 max_line_width = 0
 
-define_chrono_macro_name = "DEF_CHRONO"
-open_chrono_macro_name = "OPEN_CHRONO"
-close_chrono_macro_name = "CLOSE_CHRONO"
-
 def to_tabs(s):
 	return s
-	
+
 	# messes up the right bit
 	# try 1
-	return s.replace(" " * tab_width, "\t")
+	return s.replace(' ' * tab_width, '\t')
 	# try 2
 	lines = s.split('\n')
 	converted_lines = []
@@ -67,9 +73,12 @@ class File:
 		self.preamble = f"""
 // THIS FILE IS AUTO GENERATED, EVERYTHING WRITTEN HERE WILL BE OVERWRITTEN
 
-#define {define_chrono_macro_name}(line_number) std::chrono::time_point<std::chrono::high_resolution_clock> st##line_number; double stet##line_number = 0; double stet##line_number##_hits = 0;
-#define {open_chrono_macro_name}(line_number) st##line_number = std::chrono::high_resolution_clock::now();
-#define {close_chrono_macro_name}(line_number) std::chrono::duration<double, std::milli> elapsed##line_number = std::chrono::high_resolution_clock::now() - st##line_number; stet##line_number += elapsed##line_number##.count(); stet##line_number##_hits++;
+#include <chrono>
+
+#define {define_chrono_macro_name}(line_number) std::chrono::time_point<std::chrono::high_resolution_clock> {start_time_string}##line_number; double {total_elapsed_string}##line_number = 0; double {total_elapsed_string}##line_number##_hits = 0;
+#define {open_chrono_macro_name}(line_number) {start_time_string}##line_number = std::chrono::high_resolution_clock::now();
+#define {close_chrono_macro_name}(line_number) std::chrono::duration<double, std::milli> elapsed##line_number = std::chrono::high_resolution_clock::now() - {start_time_string}##line_number; {total_elapsed_string}##line_number += elapsed##line_number.count(); {total_elapsed_string}##line_number##_hits++;
+#define {report_chrono_macro_name}(line_number) std::cout << "line " << std::to_string(line_number) << ": " << {total_elapsed_string}##line_number << "ms " << "(" << {total_elapsed_string}##line_number##_hits << " hits, " << {total_elapsed_string}##line_number / {total_elapsed_string}##line_number##_hits << "ms per hit)" << std::endl;
 """
 		line_number_offset = self.preamble.count("\n") + len(self.functions) + preamble_spacing
 		for f in self.functions:
@@ -90,7 +99,7 @@ class File:
 		for f in sorted(self.functions, key=lambda f: f.start_index):
 			r += f"{self.content[last_index:f.start_index]}{f}"
 			last_index = f.end_index + 1
-		return (r + self.content[last_index:]).replace(u'\ufeff', '')
+		return report_chrono_pattern.sub(lambda m: f"{report_chrono_macro_name}({m.group(1)})", (r + self.content[last_index:]).replace(u"\ufeff", ""))
 
 get_line_prefix = lambda given_line_number = None: f"{open_chrono_macro_name}({(max_line_number if given_line_number == None else given_line_number):>{len(str(max_line_number))}}){" " * nb_space_line_prefix}" 
 
