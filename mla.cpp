@@ -428,12 +428,7 @@ void compute_best_carts() {
 		}
 	}
 
-	carts.erase(
-		remove_if(carts.begin(), carts.end(),
-			[max_value](const auto& cart) {
-				return cart.value != max_value;
-			}),
-		carts.end());
+	carts.erase(remove_if(carts.begin(), carts.end(),[max_value](const auto& cart) {return cart.value != max_value;}),carts.end());
 }
 
 // Algorithm

@@ -1,8 +1,11 @@
 import sys, re, shutil
 
-# ONLY WORK IF
+# LIMITATIONS
 # // @profile is the line just above the function declaration
 # the function declaration is one only one line
+# one line = one statement
+
+# TODO: removing the limitations lol
 
 # parameters
 nb_space_line_prefix = 10
