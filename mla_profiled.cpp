@@ -1,12 +1,15 @@
 
 // THIS FILE IS AUTO GENERATED, EVERYTHING WRITTEN HERE WILL BE OVERWRITTEN
 
+#include <chrono>
+
 #define DEF_CHRONO(line_number) std::chrono::time_point<std::chrono::high_resolution_clock> st##line_number; double stet##line_number = 0; double stet##line_number##_hits = 0;
 #define OPEN_CHRONO(line_number) st##line_number = std::chrono::high_resolution_clock::now();
-#define CLOSE_CHRONO(line_number) std::chrono::duration<double, std::milli> elapsed##line_number = std::chrono::high_resolution_clock::now() - st##line_number; stet##line_number += elapsed##line_number##.count(); stet##line_number##_hits++;
+#define CLOSE_CHRONO(line_number) std::chrono::duration<double, std::milli> elapsed##line_number = std::chrono::high_resolution_clock::now() - st##line_number; stet##line_number += elapsed##line_number.count(); stet##line_number##_hits++;
+#define REP_CHRONO(line_number) std::cout << "line " << std::to_string(line_number) << ": " << stet##line_number << "ms " << "(" << stet##line_number##_hits << " hits, " << stet##line_number / stet##line_number##_hits << "ms per hit)" << std::endl;
 
-DEF_CHRONO(380) DEF_CHRONO(382) DEF_CHRONO(383) DEF_CHRONO(384) DEF_CHRONO(385) DEF_CHRONO(386) DEF_CHRONO(387) DEF_CHRONO(388) DEF_CHRONO(389) DEF_CHRONO(390) DEF_CHRONO(394) DEF_CHRONO(395) DEF_CHRONO(396) DEF_CHRONO(397) DEF_CHRONO(398) DEF_CHRONO(399) DEF_CHRONO(400) DEF_CHRONO(401) DEF_CHRONO(403) DEF_CHRONO(404) DEF_CHRONO(405) DEF_CHRONO(407) DEF_CHRONO(408) DEF_CHRONO(409) DEF_CHRONO(411) DEF_CHRONO(412) DEF_CHRONO(413)
-DEF_CHRONO(424) DEF_CHRONO(425) DEF_CHRONO(426) DEF_CHRONO(429) DEF_CHRONO(430) DEF_CHRONO(431) DEF_CHRONO(432) DEF_CHRONO(433) DEF_CHRONO(434) DEF_CHRONO(435) DEF_CHRONO(436) DEF_CHRONO(437) DEF_CHRONO(440) DEF_CHRONO(441) DEF_CHRONO(442) DEF_CHRONO(443) DEF_CHRONO(444) DEF_CHRONO(445) DEF_CHRONO(446)
+DEF_CHRONO(383) DEF_CHRONO(385) DEF_CHRONO(386) DEF_CHRONO(387) DEF_CHRONO(388) DEF_CHRONO(389) DEF_CHRONO(390) DEF_CHRONO(391) DEF_CHRONO(392) DEF_CHRONO(393) DEF_CHRONO(397) DEF_CHRONO(398) DEF_CHRONO(399) DEF_CHRONO(400) DEF_CHRONO(401) DEF_CHRONO(402) DEF_CHRONO(403) DEF_CHRONO(404) DEF_CHRONO(406) DEF_CHRONO(407) DEF_CHRONO(408) DEF_CHRONO(410) DEF_CHRONO(411) DEF_CHRONO(412) DEF_CHRONO(414) DEF_CHRONO(415) DEF_CHRONO(416)
+DEF_CHRONO(427) DEF_CHRONO(428) DEF_CHRONO(429) DEF_CHRONO(432) DEF_CHRONO(433) DEF_CHRONO(434) DEF_CHRONO(435) DEF_CHRONO(436) DEF_CHRONO(437) DEF_CHRONO(438) DEF_CHRONO(439) DEF_CHRONO(440) DEF_CHRONO(443) DEF_CHRONO(444) DEF_CHRONO(445) DEF_CHRONO(446) DEF_CHRONO(447) DEF_CHRONO(448) DEF_CHRONO(449)
 
 #include <iostream>
 #include <algorithm>
@@ -377,40 +380,40 @@ inline unsigned int available_items_to_index(const vector<int>& available_items)
 
 // @profile
                           void generate_all_carts(const vector<int>& available_items) {
-OPEN_CHRONO(380)              if (available_items.size() == 1) {                                                                                           CLOSE_CHRONO(380)
+OPEN_CHRONO(383)              if (available_items.size() == 1) {                                                                                           CLOSE_CHRONO(383)
                                   // base case
-OPEN_CHRONO(382)                  int item_index = available_items[0];                                                                                     CLOSE_CHRONO(382)
-OPEN_CHRONO(383)                  unsigned int index = one_item_carts_index[item_index];                                                                   CLOSE_CHRONO(383)
-OPEN_CHRONO(384)                  const Item& item = *all_items[item_index];                                                                               CLOSE_CHRONO(384)
-OPEN_CHRONO(385)                  for (int pos : item.possible_positions) {                                                                                CLOSE_CHRONO(385)
-OPEN_CHRONO(386)                      Cart cart;                                                                                                           CLOSE_CHRONO(386)
-OPEN_CHRONO(387)                      cart.add_item(item, pos);                                                                                            CLOSE_CHRONO(387)
-OPEN_CHRONO(388)                      cart.set_canonical_form();                                                                                           CLOSE_CHRONO(388)
-OPEN_CHRONO(389)                      cart.compress_attributes();                                                                                          CLOSE_CHRONO(389)
-OPEN_CHRONO(390)                      all_carts[index].push_back(cart);                                                                                    CLOSE_CHRONO(390)
+OPEN_CHRONO(385)                  int item_index = available_items[0];                                                                                     CLOSE_CHRONO(385)
+OPEN_CHRONO(386)                  unsigned int index = one_item_carts_index[item_index];                                                                   CLOSE_CHRONO(386)
+OPEN_CHRONO(387)                  const Item& item = *all_items[item_index];                                                                               CLOSE_CHRONO(387)
+OPEN_CHRONO(388)                  for (int pos : item.possible_positions) {                                                                                CLOSE_CHRONO(388)
+OPEN_CHRONO(389)                      Cart cart;                                                                                                           CLOSE_CHRONO(389)
+OPEN_CHRONO(390)                      cart.add_item(item, pos);                                                                                            CLOSE_CHRONO(390)
+OPEN_CHRONO(391)                      cart.set_canonical_form();                                                                                           CLOSE_CHRONO(391)
+OPEN_CHRONO(392)                      cart.compress_attributes();                                                                                          CLOSE_CHRONO(392)
+OPEN_CHRONO(393)                      all_carts[index].push_back(cart);                                                                                    CLOSE_CHRONO(393)
                                   }
                                   return;
                               }
-OPEN_CHRONO(394)              unsigned int index = available_items_to_index(available_items);                                                              CLOSE_CHRONO(394)
-OPEN_CHRONO(395)              for (size_t i = 0; i < available_items.size(); i++) {                                                                        CLOSE_CHRONO(395)
-OPEN_CHRONO(396)                  int removed_item_index = available_items[i];                                                                             CLOSE_CHRONO(396)
-OPEN_CHRONO(397)                  auto one_less_available_items = available_items;                                                                         CLOSE_CHRONO(397)
-OPEN_CHRONO(398)                  one_less_available_items.erase(one_less_available_items.begin() + i);                                                    CLOSE_CHRONO(398)
-OPEN_CHRONO(399)                  unsigned int one_less_index = index - (1U << removed_item_index);                                                        CLOSE_CHRONO(399)
-OPEN_CHRONO(400)                  if (all_carts[one_less_index].empty()) {                                                                                 CLOSE_CHRONO(400)
-OPEN_CHRONO(401)                      generate_all_carts(one_less_available_items);                                                                        CLOSE_CHRONO(401)
+OPEN_CHRONO(397)              unsigned int index = available_items_to_index(available_items);                                                              CLOSE_CHRONO(397)
+OPEN_CHRONO(398)              for (size_t i = 0; i < available_items.size(); i++) {                                                                        CLOSE_CHRONO(398)
+OPEN_CHRONO(399)                  int removed_item_index = available_items[i];                                                                             CLOSE_CHRONO(399)
+OPEN_CHRONO(400)                  auto one_less_available_items = available_items;                                                                         CLOSE_CHRONO(400)
+OPEN_CHRONO(401)                  one_less_available_items.erase(one_less_available_items.begin() + i);                                                    CLOSE_CHRONO(401)
+OPEN_CHRONO(402)                  unsigned int one_less_index = index - (1U << removed_item_index);                                                        CLOSE_CHRONO(402)
+OPEN_CHRONO(403)                  if (all_carts[one_less_index].empty()) {                                                                                 CLOSE_CHRONO(403)
+OPEN_CHRONO(404)                      generate_all_carts(one_less_available_items);                                                                        CLOSE_CHRONO(404)
                                   }
-OPEN_CHRONO(403)                  for (const Cart& cart : all_carts[one_less_index]) {                                                                     CLOSE_CHRONO(403)
-OPEN_CHRONO(404)                      for (const Cart& one_item_cart : all_carts[one_item_carts_index[removed_item_index]]) {                              CLOSE_CHRONO(404)
-OPEN_CHRONO(405)                          if (cart.cells_as_number & one_item_cart.cells_as_number) { continue; }                                          CLOSE_CHRONO(405)
+OPEN_CHRONO(406)                  for (const Cart& cart : all_carts[one_less_index]) {                                                                     CLOSE_CHRONO(406)
+OPEN_CHRONO(407)                      for (const Cart& one_item_cart : all_carts[one_item_carts_index[removed_item_index]]) {                              CLOSE_CHRONO(407)
+OPEN_CHRONO(408)                          if (cart.cells_as_number & one_item_cart.cells_as_number) { continue; }                                          CLOSE_CHRONO(408)
                                           // merge cart with one_item_cart
-OPEN_CHRONO(407)                          Cart merged;                                                                                                     CLOSE_CHRONO(407)
-OPEN_CHRONO(408)                          for (size_t j = 0; j < cart.items.size(); j++) {                                                                 CLOSE_CHRONO(408)
-OPEN_CHRONO(409)                              merged.add_item(*all_items[cart.items[j]], cart.items_coords[j]);                                            CLOSE_CHRONO(409)
+OPEN_CHRONO(410)                          Cart merged;                                                                                                     CLOSE_CHRONO(410)
+OPEN_CHRONO(411)                          for (size_t j = 0; j < cart.items.size(); j++) {                                                                 CLOSE_CHRONO(411)
+OPEN_CHRONO(412)                              merged.add_item(*all_items[cart.items[j]], cart.items_coords[j]);                                            CLOSE_CHRONO(412)
                                           }
-OPEN_CHRONO(411)                          merged.add_item(*all_items[removed_item_index], one_item_cart.items_coords[0]);                                  CLOSE_CHRONO(411)
-OPEN_CHRONO(412)                          merged.set_canonical_form();                                                                                     CLOSE_CHRONO(412)
-OPEN_CHRONO(413)                          try_adding_cart(merged, index);                                                                                  CLOSE_CHRONO(413)
+OPEN_CHRONO(414)                          merged.add_item(*all_items[removed_item_index], one_item_cart.items_coords[0]);                                  CLOSE_CHRONO(414)
+OPEN_CHRONO(415)                          merged.set_canonical_form();                                                                                     CLOSE_CHRONO(415)
+OPEN_CHRONO(416)                          try_adding_cart(merged, index);                                                                                  CLOSE_CHRONO(416)
                                       }
                                   }
                               }
@@ -421,29 +424,29 @@ std::chrono::time_point<std::chrono::high_resolution_clock> time_took_end;
 
 // @profile
                           void compute_best_carts() {
-OPEN_CHRONO(424)              vector<int> available_items;                                                                                                 CLOSE_CHRONO(424)
-OPEN_CHRONO(425)              for (int i = 0; i < all_items.size(); ++i) {                                                                                 CLOSE_CHRONO(425)
-OPEN_CHRONO(426)                  available_items.push_back(i);                                                                                            CLOSE_CHRONO(426)
+OPEN_CHRONO(427)              vector<int> available_items;                                                                                                 CLOSE_CHRONO(427)
+OPEN_CHRONO(428)              for (int i = 0; i < all_items.size(); ++i) {                                                                                 CLOSE_CHRONO(428)
+OPEN_CHRONO(429)                  available_items.push_back(i);                                                                                            CLOSE_CHRONO(429)
                               }
                               // cout << available_items << endl;
-OPEN_CHRONO(429)              time_took_start = std::chrono::high_resolution_clock::now();                                                                 CLOSE_CHRONO(429)
-OPEN_CHRONO(430)              generate_all_carts(available_items);                                                                                         CLOSE_CHRONO(430)
-OPEN_CHRONO(431)              time_took_end = std::chrono::high_resolution_clock::now();                                                                   CLOSE_CHRONO(431)
-OPEN_CHRONO(432)              vector<Cart>& carts = all_carts[all_carts_length - 1];                                                                       CLOSE_CHRONO(432)
-OPEN_CHRONO(433)                                                                                                                                           CLOSE_CHRONO(433)
-OPEN_CHRONO(434)              int max_value = 0;                                                                                                           CLOSE_CHRONO(434)
-OPEN_CHRONO(435)              for (auto& cart : carts) {                                                                                                   CLOSE_CHRONO(435)
-OPEN_CHRONO(436)                  if (cart.set_value() > max_value) {                                                                                      CLOSE_CHRONO(436)
-OPEN_CHRONO(437)                      max_value = cart.value;                                                                                              CLOSE_CHRONO(437)
+OPEN_CHRONO(432)              time_took_start = std::chrono::high_resolution_clock::now();                                                                 CLOSE_CHRONO(432)
+OPEN_CHRONO(433)              generate_all_carts(available_items);                                                                                         CLOSE_CHRONO(433)
+OPEN_CHRONO(434)              time_took_end = std::chrono::high_resolution_clock::now();                                                                   CLOSE_CHRONO(434)
+OPEN_CHRONO(435)              vector<Cart>& carts = all_carts[all_carts_length - 1];                                                                       CLOSE_CHRONO(435)
+OPEN_CHRONO(436)                                                                                                                                           CLOSE_CHRONO(436)
+OPEN_CHRONO(437)              int max_value = 0;                                                                                                           CLOSE_CHRONO(437)
+OPEN_CHRONO(438)              for (auto& cart : carts) {                                                                                                   CLOSE_CHRONO(438)
+OPEN_CHRONO(439)                  if (cart.set_value() > max_value) {                                                                                      CLOSE_CHRONO(439)
+OPEN_CHRONO(440)                      max_value = cart.value;                                                                                              CLOSE_CHRONO(440)
                                   }
                               }
-OPEN_CHRONO(440)                                                                                                                                           CLOSE_CHRONO(440)
-OPEN_CHRONO(441)              carts.erase(                                                                                                                 CLOSE_CHRONO(441)
-OPEN_CHRONO(442)                  remove_if(carts.begin(), carts.end(),                                                                                    CLOSE_CHRONO(442)
-OPEN_CHRONO(443)                      [max_value](const auto& cart) {                                                                                      CLOSE_CHRONO(443)
-OPEN_CHRONO(444)                          return cart.value != max_value;                                                                                  CLOSE_CHRONO(444)
-OPEN_CHRONO(445)                      }),                                                                                                                  CLOSE_CHRONO(445)
-OPEN_CHRONO(446)                  carts.end());                                                                                                            CLOSE_CHRONO(446)
+OPEN_CHRONO(443)                                                                                                                                           CLOSE_CHRONO(443)
+OPEN_CHRONO(444)              carts.erase(                                                                                                                 CLOSE_CHRONO(444)
+OPEN_CHRONO(445)                  remove_if(carts.begin(), carts.end(),                                                                                    CLOSE_CHRONO(445)
+OPEN_CHRONO(446)                      [max_value](const auto& cart) {                                                                                      CLOSE_CHRONO(446)
+OPEN_CHRONO(447)                          return cart.value != max_value;                                                                                  CLOSE_CHRONO(447)
+OPEN_CHRONO(448)                      }),                                                                                                                  CLOSE_CHRONO(448)
+OPEN_CHRONO(449)                  carts.end());                                                                                                            CLOSE_CHRONO(449)
                           }
 
 // Algorithm
@@ -494,8 +497,8 @@ int main() {
 	all_carts_length = (1U << all_items_length) - 1;
 
 	all_carts.resize(all_carts_length);
-	cout << "all_carts.size() = " << all_carts.size() << endl;
-	cout << "all_carts.capacity() = " << all_carts.capacity() << endl;
+	// cout << "all_carts.size() = " << all_carts.size() << endl;
+	// cout << "all_carts.capacity() = " << all_carts.capacity() << endl;
 	
 	for (int i = 0; i < all_carts_length; i++) {
 		// worst case is when n items are of shape 1x1
@@ -528,6 +531,6 @@ int main() {
 	*/
 	std::chrono::duration<double, std::milli> elapsed = time_took_end - time_took_start;
 	cout << "nb carts found: " << all_carts[all_carts_length - 1].size() << " (" << elapsed.count() << "ms)" << endl;
-	cout << "stet1 total = " << stet1 << "ms " << "(" << stet1_hits << " hits, " << stet1 / stet1_hits << "ms per hit)" << endl;
-	cout << "stet2 total = " << stet2 << "ms " << "(" << stet2_hits << " hits, " << stet2 / stet2_hits << "ms per hit)" << endl;
+	REP_CHRONO(383)
+	REP_CHRONO(427)
 }
