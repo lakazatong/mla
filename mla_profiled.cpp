@@ -1,15 +1,42 @@
 
 // THIS FILE IS AUTO GENERATED, EVERYTHING WRITTEN HERE WILL BE OVERWRITTEN
 
+// # chat gpt
+
+#include <iostream>
+#include <locale>
+
+struct custom_thousand_sep : std::numpunct<char> {
+    char sep;
+    custom_thousand_sep(char s) : sep(s) {}
+protected:
+    virtual char do_thousands_sep() const override { return sep; }
+    virtual std::string do_grouping() const override { return "\3"; }
+};
+
+struct thousand_separator {
+    char sep;
+    thousand_separator(char s) : sep(s) {}
+};
+
+std::ostream& operator<<(std::ostream& os, const thousand_separator& ts) {
+    os.imbue(std::locale(os.getloc(), new custom_thousand_sep(ts.sep)));
+    return os;
+}
+
 #include <chrono>
 
 #define DEF_CHRONO(line_number) std::chrono::time_point<std::chrono::high_resolution_clock> st##line_number; double stet##line_number = 0; long stet##line_number##_hits = 0; std::chrono::time_point<std::chrono::high_resolution_clock> top_chrono##line_number;
-#define OPEN_CHRONO(line_number) st##line_number = std::chrono::high_resolution_clock::now();
+#define START_CHRONO(line_number) st##line_number = std::chrono::high_resolution_clock::now();
 #define TOP_CHRONO(line_number) top_chrono##line_number = std::chrono::high_resolution_clock::now(); std::chrono::duration<double, std::milli> elapsed##line_number = top_chrono##line_number - st##line_number; stet##line_number += elapsed##line_number.count(); stet##line_number##_hits++; st##line_number = top_chrono##line_number;
-#define REP_FUNC(function_name, total_time) std::cout << std::endl << "Function name: " << #function_name << std::endl << "Total Time: " << std::setprecision(2) << std::fixed << total_time << std::endl << "Nb Call: " << function_name##_calls << std::endl;
-#define REP_HEADER std::cout << std::endl << "Line #        Hits        Time     Per Hit" << std::endl << "==========================================" << std::endl;
-#define REP_CHRONO(line_number, line_txt) std::cout << std::setw(6) << std::right << std::fixed << line_number << " " << std::setw(11) << std::fixed << stet##line_number##_hits << " " << std::setw(11) << std::fixed << std::setprecision(2) << stet##line_number << " " << std::setw(11) << std::fixed << std::setprecision(4) << stet##line_number / (double)(stet##line_number##_hits) << " " << line_txt << std::endl;
-#define EREP_CHRONO(line_number, line_txt) std::cout << std::setw(6) << std::right << line_number << "                                    " << " " << line_txt << std::endl;
+
+#define REP_FUNC(function_name, total_time) long function_name##_total_time = total_time; std::cout << std::endl << "Function name: " << #function_name << std::endl << "Total Time: " << std::fixed << function_name##_total_time << std::endl << "Call #: " << std::fixed << function_name##_calls << std::endl;
+#define REP_FUNC_HEADER std::cout << std::endl << "Line #        Hits        Time     Per Hit% Time" << std::endl << "================================================" << std::endl;
+#define REP_FUNC_LINE(line_number, line_txt, function_name) std::cout << std::right << std::setw(6) << std::fixed << line_number << " " << std::right << std::setw(11) << std::fixed << stet##line_number##_hits << " " << std::right << std::setw(11) << std::fixed << std::setprecision(2) << stet##line_number << " " << std::right << std::setw(11) << std::fixed << std::setprecision(4) << stet##line_number / (double)(stet##line_number##_hits) << " " << line_txt << std::endl;
+#define REPE_FUNC_LINE(line_number, line_txt) std::cout << std::right << std::setw(6) << std::fixed << line_number << "                                          " << " " << line_txt << std::endl;
+
+#define REP_LINE_HEADER std::cout << std::endl << "Line #        Hits        Time     Per Hit" << std::endl << "==========================================" << std::endl;
+#define REP_LINE(line_number, line_txt) std::cout << std::right << std::setw(6) << std::fixed << line_number << " " << std::right << std::setw(11) << std::fixed << stet##line_number##_hits << " " << std::right << std::setw(11) << std::fixed << std::setprecision(2) << stet##line_number << " " << std::right << std::setw(11) << std::fixed << std::setprecision(4) << stet##line_number / (double)(stet##line_number##_hits) << " " << " " << line_txt << std::endl;
 long generate_all_carts_calls = 0;
 long compute_best_carts_calls = 0;
 
@@ -368,67 +395,67 @@ inline unsigned int available_items_to_index(const vector<int>& available_items)
 }
 
 // @profile
-                          void generate_all_carts(const vector<int>& available_items) {
+                           void generate_all_carts(const vector<int>& available_items) {
 generate_all_carts_calls++;
-OPEN_CHRONO(354)              if (available_items.size() == 1) {                                                                                                                           TOP_CHRONO(354)
-                                  // base case
-OPEN_CHRONO(356)                  int item_index = available_items[0];                                                                                                                     TOP_CHRONO(356)
-OPEN_CHRONO(357)                  unsigned int index = one_item_carts_index[item_index];                                                                                                   TOP_CHRONO(357)
-OPEN_CHRONO(358)                  const Item& item = *all_items[item_index];                                                                                                               TOP_CHRONO(358)
-OPEN_CHRONO(359)                  for (int pos : item.possible_positions) {                                                                                                                TOP_CHRONO(359)
-OPEN_CHRONO(360)                      Cart cart;                                                                                                                                           TOP_CHRONO(360)
-OPEN_CHRONO(361)                      cart.add_item(item, pos);                                                                                                                            TOP_CHRONO(361)
-OPEN_CHRONO(362)                      cart.set_canonical_form();                                                                                                                           TOP_CHRONO(362)
-OPEN_CHRONO(363)                      cart.compress_attributes();                                                                                                                          TOP_CHRONO(363)
-OPEN_CHRONO(364)                      all_carts[index].push_back(cart);                                                                                                                    TOP_CHRONO(364)
-                                  }
-                                  return;
-                              }
-OPEN_CHRONO(368)              unsigned int index = available_items_to_index(available_items);                                                                                              TOP_CHRONO(368)
-OPEN_CHRONO(369)              for (size_t i = 0; i < available_items.size(); i++) {                                                                                                        TOP_CHRONO(369)
-OPEN_CHRONO(370)                  int removed_item_index = available_items[i];                                                                                                             TOP_CHRONO(370)
-OPEN_CHRONO(371)                  auto one_less_available_items = available_items;                                                                                                         TOP_CHRONO(371)
-OPEN_CHRONO(372)                  one_less_available_items.erase(one_less_available_items.begin() + i);                                                                                    TOP_CHRONO(372)
-OPEN_CHRONO(373)                  unsigned int one_less_index = index - (1U << removed_item_index);                                                                                        TOP_CHRONO(373)
-OPEN_CHRONO(374)                  if (all_carts[one_less_index].empty()) {                                                                                                                 TOP_CHRONO(374)
-OPEN_CHRONO(375)                      generate_all_carts(one_less_available_items);                                                                                                        TOP_CHRONO(375)
-                                  }
-OPEN_CHRONO(377)                  for (const Cart& cart : all_carts[one_less_index]) {                                                                                                     TOP_CHRONO(377)
-OPEN_CHRONO(378)                      for (const Cart& one_item_cart : all_carts[one_item_carts_index[removed_item_index]]) {                                                              TOP_CHRONO(378)
-OPEN_CHRONO(379)                          if (cart.cells_as_number & one_item_cart.cells_as_number) { continue; }                                                                          TOP_CHRONO(379)
-                                          // merge cart with one_item_cart
-OPEN_CHRONO(381)                          Cart merged;                                                                                                                                     TOP_CHRONO(381)
-OPEN_CHRONO(382)                          for (size_t j = 0; j < cart.items.size(); j++) {                                                                                                 TOP_CHRONO(382)
-OPEN_CHRONO(383)                              merged.add_item(*all_items[cart.items[j]], cart.items_coords[j]);                                                                            TOP_CHRONO(383)
-                                          }
-OPEN_CHRONO(385)                          merged.add_item(*all_items[removed_item_index], one_item_cart.items_coords[0]);                                                                  TOP_CHRONO(385)
-OPEN_CHRONO(386)                          merged.set_canonical_form();                                                                                                                     TOP_CHRONO(386)
-OPEN_CHRONO(387)                          try_adding_cart(merged, index);                                                                                                                  TOP_CHRONO(387)
-                                      }
-                                  }
-                              }
-                          }
+START_CHRONO(354)              if (available_items.size() == 1) {                                                                                                                           TOP_CHRONO(354)
+                                   // base case
+START_CHRONO(356)                  int item_index = available_items[0];                                                                                                                     TOP_CHRONO(356)
+START_CHRONO(357)                  unsigned int index = one_item_carts_index[item_index];                                                                                                   TOP_CHRONO(357)
+START_CHRONO(358)                  const Item& item = *all_items[item_index];                                                                                                               TOP_CHRONO(358)
+START_CHRONO(359)                  for (int pos : item.possible_positions) {                                                                                                                TOP_CHRONO(359)
+START_CHRONO(360)                      Cart cart;                                                                                                                                           TOP_CHRONO(360)
+START_CHRONO(361)                      cart.add_item(item, pos);                                                                                                                            TOP_CHRONO(361)
+START_CHRONO(362)                      cart.set_canonical_form();                                                                                                                           TOP_CHRONO(362)
+START_CHRONO(363)                      cart.compress_attributes();                                                                                                                          TOP_CHRONO(363)
+START_CHRONO(364)                      all_carts[index].push_back(cart);                                                                                                                    TOP_CHRONO(364)
+                                   }
+                                   return;
+                               }
+START_CHRONO(368)              unsigned int index = available_items_to_index(available_items);                                                                                              TOP_CHRONO(368)
+START_CHRONO(369)              for (size_t i = 0; i < available_items.size(); i++) {                                                                                                        TOP_CHRONO(369)
+START_CHRONO(370)                  int removed_item_index = available_items[i];                                                                                                             TOP_CHRONO(370)
+START_CHRONO(371)                  auto one_less_available_items = available_items;                                                                                                         TOP_CHRONO(371)
+START_CHRONO(372)                  one_less_available_items.erase(one_less_available_items.begin() + i);                                                                                    TOP_CHRONO(372)
+START_CHRONO(373)                  unsigned int one_less_index = index - (1U << removed_item_index);                                                                                        TOP_CHRONO(373)
+START_CHRONO(374)                  if (all_carts[one_less_index].empty()) {                                                                                                                 TOP_CHRONO(374)
+START_CHRONO(375)                      generate_all_carts(one_less_available_items);                                                                                                        TOP_CHRONO(375)
+                                   }
+START_CHRONO(377)                  for (const Cart& cart : all_carts[one_less_index]) {                                                                                                     TOP_CHRONO(377)
+START_CHRONO(378)                      for (const Cart& one_item_cart : all_carts[one_item_carts_index[removed_item_index]]) {                                                              TOP_CHRONO(378)
+START_CHRONO(379)                          if (cart.cells_as_number & one_item_cart.cells_as_number) { continue; }                                                                          TOP_CHRONO(379)
+                                           // merge cart with one_item_cart
+START_CHRONO(381)                          Cart merged;                                                                                                                                     TOP_CHRONO(381)
+START_CHRONO(382)                          for (size_t j = 0; j < cart.items.size(); j++) {                                                                                                 TOP_CHRONO(382)
+START_CHRONO(383)                              merged.add_item(*all_items[cart.items[j]], cart.items_coords[j]);                                                                            TOP_CHRONO(383)
+                                           }
+START_CHRONO(385)                          merged.add_item(*all_items[removed_item_index], one_item_cart.items_coords[0]);                                                                  TOP_CHRONO(385)
+START_CHRONO(386)                          merged.set_canonical_form();                                                                                                                     TOP_CHRONO(386)
+START_CHRONO(387)                          try_adding_cart(merged, index);                                                                                                                  TOP_CHRONO(387)
+                                       }
+                                   }
+                               }
+                           }
 
 // @profile
-                          void compute_best_carts() {
+                           void compute_best_carts() {
 compute_best_carts_calls++;
-OPEN_CHRONO(395)              vector<int> available_items;                                                                                                                                 TOP_CHRONO(395)
-OPEN_CHRONO(396)              for (int i = 0; i < all_items.size(); ++i) {                                                                                                                 TOP_CHRONO(396)
-OPEN_CHRONO(397)                  available_items.push_back(i);                                                                                                                            TOP_CHRONO(397)
-                              }
-                              // cout << available_items << endl;
-OPEN_CHRONO(400)              generate_all_carts(available_items);                                                                                                                         TOP_CHRONO(400)
-OPEN_CHRONO(401)              vector<Cart>& carts = all_carts[all_carts_length - 1];                                                                                                       TOP_CHRONO(401)
-OPEN_CHRONO(402)                                                                                                                                                                           TOP_CHRONO(402)
-OPEN_CHRONO(403)              int max_value = 0;                                                                                                                                           TOP_CHRONO(403)
-OPEN_CHRONO(404)              for (auto& cart : carts) {                                                                                                                                   TOP_CHRONO(404)
-OPEN_CHRONO(405)                  if (cart.set_value() > max_value) {                                                                                                                      TOP_CHRONO(405)
-OPEN_CHRONO(406)                      max_value = cart.value;                                                                                                                              TOP_CHRONO(406)
-                                  }
-                              }
-OPEN_CHRONO(409)                                                                                                                                                                           TOP_CHRONO(409)
-OPEN_CHRONO(410)              carts.erase(remove_if(carts.begin(), carts.end(),[max_value](const auto& cart) {return cart.value != max_value;}),carts.end());                              TOP_CHRONO(410)
-                          }
+START_CHRONO(395)              vector<int> available_items;                                                                                                                                 TOP_CHRONO(395)
+START_CHRONO(396)              for (int i = 0; i < all_items.size(); ++i) {                                                                                                                 TOP_CHRONO(396)
+START_CHRONO(397)                  available_items.push_back(i);                                                                                                                            TOP_CHRONO(397)
+                               }
+                               // cout << available_items << endl;
+START_CHRONO(400)              generate_all_carts(available_items);                                                                                                                         TOP_CHRONO(400)
+START_CHRONO(401)              vector<Cart>& carts = all_carts[all_carts_length - 1];                                                                                                       TOP_CHRONO(401)
+START_CHRONO(402)                                                                                                                                                                           TOP_CHRONO(402)
+START_CHRONO(403)              int max_value = 0;                                                                                                                                           TOP_CHRONO(403)
+START_CHRONO(404)              for (auto& cart : carts) {                                                                                                                                   TOP_CHRONO(404)
+START_CHRONO(405)                  if (cart.set_value() > max_value) {                                                                                                                      TOP_CHRONO(405)
+START_CHRONO(406)                      max_value = cart.value;                                                                                                                              TOP_CHRONO(406)
+                                   }
+                               }
+START_CHRONO(409)                                                                                                                                                                           TOP_CHRONO(409)
+START_CHRONO(410)              carts.erase(remove_if(carts.begin(), carts.end(),[max_value](const auto& cart) {return cart.value != max_value;}),carts.end());                              TOP_CHRONO(410)
+                           }
 
 // Algorithm
 // -------------------
@@ -510,7 +537,7 @@ int main() {
 		cout << cart.to_string() << endl;
 	}
 	*/
-	REP_HEADER REP_CHRONO(378, "            for (const Cart& one_item_cart : all_carts[one_item_carts_index[removed_item_index]]) {")
-	REP_HEADER REP_CHRONO(397, "        available_items.push_back(i);")
-	REP_FUNC(generate_all_carts, stet354+stet356+stet357+stet358+stet359+stet360+stet361+stet362+stet363+stet364+stet368+stet369+stet370+stet371+stet372+stet373+stet374+stet375+stet377+stet378+stet379+stet381+stet382+stet383+stet385+stet386+stet387) REP_HEADER REP_CHRONO(354, "    if (available_items.size() == 1) {") EREP_CHRONO(355, "        // base case") REP_CHRONO(356, "        int item_index = available_items[0];") REP_CHRONO(357, "        unsigned int index = one_item_carts_index[item_index];") REP_CHRONO(358, "        const Item& item = *all_items[item_index];") REP_CHRONO(359, "        for (int pos : item.possible_positions) {") REP_CHRONO(360, "            Cart cart;") REP_CHRONO(361, "            cart.add_item(item, pos);") REP_CHRONO(362, "            cart.set_canonical_form();") REP_CHRONO(363, "            cart.compress_attributes();") REP_CHRONO(364, "            all_carts[index].push_back(cart);") EREP_CHRONO(365, "        }") EREP_CHRONO(366, "        return;") EREP_CHRONO(367, "    }") REP_CHRONO(368, "    unsigned int index = available_items_to_index(available_items);") REP_CHRONO(369, "    for (size_t i = 0; i < available_items.size(); i++) {") REP_CHRONO(370, "        int removed_item_index = available_items[i];") REP_CHRONO(371, "        auto one_less_available_items = available_items;") REP_CHRONO(372, "        one_less_available_items.erase(one_less_available_items.begin() + i);") REP_CHRONO(373, "        unsigned int one_less_index = index - (1U << removed_item_index);") REP_CHRONO(374, "        if (all_carts[one_less_index].empty()) {") REP_CHRONO(375, "            generate_all_carts(one_less_available_items);") EREP_CHRONO(376, "        }") REP_CHRONO(377, "        for (const Cart& cart : all_carts[one_less_index]) {") REP_CHRONO(378, "            for (const Cart& one_item_cart : all_carts[one_item_carts_index[removed_item_index]]) {") REP_CHRONO(379, "                if (cart.cells_as_number & one_item_cart.cells_as_number) { continue; }") EREP_CHRONO(380, "                // merge cart with one_item_cart") REP_CHRONO(381, "                Cart merged;") REP_CHRONO(382, "                for (size_t j = 0; j < cart.items.size(); j++) {") REP_CHRONO(383, "                    merged.add_item(*all_items[cart.items[j]], cart.items_coords[j]);") EREP_CHRONO(384, "                }") REP_CHRONO(385, "                merged.add_item(*all_items[removed_item_index], one_item_cart.items_coords[0]);") REP_CHRONO(386, "                merged.set_canonical_form();") REP_CHRONO(387, "                try_adding_cart(merged, index);") EREP_CHRONO(388, "            }") EREP_CHRONO(389, "        }") EREP_CHRONO(390, "    }")
+	REP_LINE_HEADER REP_LINE(378, "            for (const Cart& one_item_cart : all_carts[one_item_carts_index[removed_item_index]]) {")
+	REP_LINE_HEADER REP_LINE(397, "        available_items.push_back(i);")
+	REP_FUNC(generate_all_carts, stet354+stet356+stet357+stet358+stet359+stet360+stet361+stet362+stet363+stet364+stet368+stet369+stet370+stet371+stet372+stet373+stet374+stet375+stet377+stet378+stet379+stet381+stet382+stet383+stet385+stet386+stet387) REP_FUNC_HEADER REP_FUNC_LINE(354, "    if (available_items.size() == 1) {", generate_all_carts) REPE_FUNC_LINE(355, "        // base case") REP_FUNC_LINE(356, "        int item_index = available_items[0];", generate_all_carts) REP_FUNC_LINE(357, "        unsigned int index = one_item_carts_index[item_index];", generate_all_carts) REP_FUNC_LINE(358, "        const Item& item = *all_items[item_index];", generate_all_carts) REP_FUNC_LINE(359, "        for (int pos : item.possible_positions) {", generate_all_carts) REP_FUNC_LINE(360, "            Cart cart;", generate_all_carts) REP_FUNC_LINE(361, "            cart.add_item(item, pos);", generate_all_carts) REP_FUNC_LINE(362, "            cart.set_canonical_form();", generate_all_carts) REP_FUNC_LINE(363, "            cart.compress_attributes();", generate_all_carts) REP_FUNC_LINE(364, "            all_carts[index].push_back(cart);", generate_all_carts) REPE_FUNC_LINE(365, "        }") REPE_FUNC_LINE(366, "        return;") REPE_FUNC_LINE(367, "    }") REP_FUNC_LINE(368, "    unsigned int index = available_items_to_index(available_items);", generate_all_carts) REP_FUNC_LINE(369, "    for (size_t i = 0; i < available_items.size(); i++) {", generate_all_carts) REP_FUNC_LINE(370, "        int removed_item_index = available_items[i];", generate_all_carts) REP_FUNC_LINE(371, "        auto one_less_available_items = available_items;", generate_all_carts) REP_FUNC_LINE(372, "        one_less_available_items.erase(one_less_available_items.begin() + i);", generate_all_carts) REP_FUNC_LINE(373, "        unsigned int one_less_index = index - (1U << removed_item_index);", generate_all_carts) REP_FUNC_LINE(374, "        if (all_carts[one_less_index].empty()) {", generate_all_carts) REP_FUNC_LINE(375, "            generate_all_carts(one_less_available_items);", generate_all_carts) REPE_FUNC_LINE(376, "        }") REP_FUNC_LINE(377, "        for (const Cart& cart : all_carts[one_less_index]) {", generate_all_carts) REP_FUNC_LINE(378, "            for (const Cart& one_item_cart : all_carts[one_item_carts_index[removed_item_index]]) {", generate_all_carts) REP_FUNC_LINE(379, "                if (cart.cells_as_number & one_item_cart.cells_as_number) { continue; }", generate_all_carts) REPE_FUNC_LINE(380, "                // merge cart with one_item_cart") REP_FUNC_LINE(381, "                Cart merged;", generate_all_carts) REP_FUNC_LINE(382, "                for (size_t j = 0; j < cart.items.size(); j++) {", generate_all_carts) REP_FUNC_LINE(383, "                    merged.add_item(*all_items[cart.items[j]], cart.items_coords[j]);", generate_all_carts) REPE_FUNC_LINE(384, "                }") REP_FUNC_LINE(385, "                merged.add_item(*all_items[removed_item_index], one_item_cart.items_coords[0]);", generate_all_carts) REP_FUNC_LINE(386, "                merged.set_canonical_form();", generate_all_carts) REP_FUNC_LINE(387, "                try_adding_cart(merged, index);", generate_all_carts) REPE_FUNC_LINE(388, "            }") REPE_FUNC_LINE(389, "        }") REPE_FUNC_LINE(390, "    }")
 }
