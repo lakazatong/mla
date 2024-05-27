@@ -1,25 +1,38 @@
 import sys, re, shutil, unicodedata
 
+# mimics how kernprof works in python but for C++
+
 # LIMITATIONS
 # // @profile must be on the line just above the function declaration
 # function declarations must be one line only
 # one line must equal one statement
 
 # TODO: removing the limitations lol
-# TODO: report entire functions
-# nice to have: put / move the chrono include at the very top
+# TODO: put / move the chrono include at the very top
 
-# parameters
+# parameters (those marked with an ### are not meant to be used directly)
 nb_space_line_prefix = 10
 nb_space_line_suffix = 30
 tab_width = 4
 preamble_spacing = 2
-define_chrono_macro_name = "DEF_CHRONO"
+top_chrono_name = "top_chrono"
+define_chrono_macro_name = "DEF_CHRONO" ###
 open_chrono_macro_name = "OPEN_CHRONO"
-close_chrono_macro_name = "CLOSE_CHRONO"
-report_chrono_macro_name = "REP_CHRONO"
+top_chrono_macro_name = "TOP_CHRONO"
+report_function_header_macro_name = "REP_FUNC" ###
+report_header_chrono_macro_name = "REP_HEADER" ###
+report_line_chrono_macro_name = "REP_CHRONO"
+report_empty_line_chrono_macro_name = "EREP_CHRONO" ###
 start_time_string = "st"
 total_elapsed_string = start_time_string + "et" # et for end_time, making "stet" (simple enough to write and pronounce lol)
+hits_max_digits = 11
+time_max_digits = 11
+perhit_max_digits = 11
+time_precision = 2
+perhit_precision = 4
+# see https://en.cppreference.com/w/cpp/io/manip/fixed
+# "" for "default" or "automatic" (C++ adapts depending on the magnitude of the number)
+force_number_format = "std::fixed"
 
 # string to put before functions to add profiling to
 profile_pattern = re.compile(r"\/\/ @profile\s*\r?\n")
@@ -28,15 +41,17 @@ ignore_bracket_line_pattern = re.compile(r"^\s*[{}]+\s*$")
 ignore_comment_line_pattern = re.compile(r"^\s*//(?:a|[^a])*$")
 ignore_empty_return_line_pattern = re.compile(r"^\s*return;\s*$")
 # line reports
-report_line_chrono_pattern = re.compile(rf"\/\/ {report_chrono_macro_name}\((\d+)\)")
+report_line_chrono_pattern = re.compile(rf"\/\/ {report_line_chrono_macro_name}\((\d+)\)")
 # function reports (any character is captured, the function name check will be performed after)
-report_function_chrono_pattern = re.compile(rf"\/\/ {report_chrono_macro_name}\(((?:a|[^a])+?)\)")
-# put / move the chrono include at the very top
+report_function_chrono_pattern = re.compile(rf"\/\/ {report_line_chrono_macro_name}\(((?:a|[^a])+?)\)")
+# chrono include
 # a = re.compile(r"#include <chrono>")
 
 max_line_number = 0
 max_line_width = 0
 line_number_to_line = []
+function_name_to_function = {}
+error_occured = False
 
 def to_tabs(s):
 	return s
@@ -80,38 +95,64 @@ def is_valid_identifier(name: str) -> bool:
 	name = unicodedata.normalize('NFKC', name)
 	return all(is_xid_continue(char) for char in name[1:]) if is_xid_start(name[0]) or name[0] == '_' else False
 
-    
-
-
 class File:
 	def __init__(self, content, functions):
 		self.content = content
 		self.functions = functions
 		self.preamble = ""
 
-	def add_profiling(self):
+	def set_profiling(self):
+		tmp = max(0, len(str(max_line_number)) - 6)
+		rep_header_macro_top = f"Line #{" " * tmp}{" " * (hits_max_digits - 3)}Hits{" " * (time_max_digits - 3)}Time{" " * (perhit_max_digits - 6)}Per Hit"
+		delimiter_bar_length = len(rep_header_macro_top)
 		self.preamble = f"""
 // THIS FILE IS AUTO GENERATED, EVERYTHING WRITTEN HERE WILL BE OVERWRITTEN
 
 #include <chrono>
 
-#define {define_chrono_macro_name}(line_number) std::chrono::time_point<std::chrono::high_resolution_clock> {start_time_string}##line_number; double {total_elapsed_string}##line_number = 0; double {total_elapsed_string}##line_number##_hits = 0;
+#define {define_chrono_macro_name}(line_number) std::chrono::time_point<std::chrono::high_resolution_clock> {start_time_string}##line_number; double {total_elapsed_string}##line_number = 0; long {total_elapsed_string}##line_number##_hits = 0; std::chrono::time_point<std::chrono::high_resolution_clock> {top_chrono_name}##line_number;
 #define {open_chrono_macro_name}(line_number) {start_time_string}##line_number = std::chrono::high_resolution_clock::now();
-#define {close_chrono_macro_name}(line_number) std::chrono::duration<double, std::milli> elapsed##line_number = std::chrono::high_resolution_clock::now() - {start_time_string}##line_number; {total_elapsed_string}##line_number += elapsed##line_number.count(); {total_elapsed_string}##line_number##_hits++;
-#define {report_chrono_macro_name}(line_number, line_txt) std::cout << std::setw(6) << line_number << " " << std::setw(8) << stet##line_number##_hits << " " << std::setw(12) << stet##line_number << " " << std::setw(12) << stet##line_number / stet##line_number##_hits << " " << line_txt << std::endl;
+#define {top_chrono_macro_name}(line_number) {top_chrono_name}##line_number = std::chrono::high_resolution_clock::now(); std::chrono::duration<double, std::milli> elapsed##line_number = {top_chrono_name}##line_number - {start_time_string}##line_number; {total_elapsed_string}##line_number += elapsed##line_number.count(); {total_elapsed_string}##line_number##_hits++; {start_time_string}##line_number = {top_chrono_name}##line_number;
+#define {report_function_header_macro_name}(function_name, total_time) std::cout << std::endl << "Function name: " << #function_name << std::endl << "Total Time: " << std::setprecision({time_precision}) << {force_number_format} << total_time << std::endl << "Nb Call: " << function_name##_calls << std::endl;
+#define {report_header_chrono_macro_name} std::cout << std::endl << "{rep_header_macro_top}" << std::endl << "{"=" * delimiter_bar_length}" << std::endl;
+#define {report_line_chrono_macro_name}(line_number, line_txt) std::cout << std::setw({6 + tmp}) << std::right << {force_number_format} << line_number << " " << std::setw({hits_max_digits}) << {force_number_format} << {total_elapsed_string}##line_number##_hits << " " << std::setw({time_max_digits}) << {force_number_format} << std::setprecision({time_precision}) << {total_elapsed_string}##line_number << " " << std::setw({perhit_max_digits}) << {force_number_format} << std::setprecision({perhit_precision}) << {total_elapsed_string}##line_number / (double)({total_elapsed_string}##line_number##_hits) << " " << line_txt << std::endl;
+#define {report_empty_line_chrono_macro_name}(line_number, line_txt) std::cout << std::setw({6 + tmp}) << std::right << line_number << "{" " * (delimiter_bar_length - 6 - tmp)}" << " " << line_txt << std::endl;
 """
-		line_number_offset = self.preamble.count("\n") + len(self.functions) + preamble_spacing
+		# done this way instead of considering it's the first function's line Hit count because it could be a loop
+		# in which case it would corresponds to the number of loops, not function calls
+		self.preamble += """
+""".join(f"long {f.function_name}_calls = 0;" for f in self.functions) + """
+"""
+		# line_number_offset = self.preamble.count("\n") + len(self.functions) + preamble_spacing
 		for f in self.functions:
-			f.update_line_numbers(line_number_offset)
+			# f.update_line_numbers(line_number_offset)
+			f.update_line_number_to_line()
 			self.preamble += f"\n{" ".join(f"{define_chrono_macro_name}({line.line_number})" for line in f.lines if not line.ignore)}"
 		self.preamble += "\n" * preamble_spacing
-		for f in self.functions: f.add_profiling()
+		for f in self.functions: f.set_profiling()
 
 	def write_to(self, path):
 		with open(path, "w", encoding="utf-8") as f:
 			f.write(str(self))
 
+	def try_replace_report_line(self, m):
+		global error_occured
+		line_number, line = int(m.group(1)), None
+		try:
+			line = line_number_to_line[line_number]
+			if line == None: raise IndexError
+			if line.ignore:
+				print(f"line number {line_number} can not be profiled")
+				error_occured = True
+				return ""
+		except IndexError:
+			print(f"line number {line_number} is not profiled")
+			error_occured = True
+			return ""
+		return f"{report_header_chrono_macro_name} {report_line_chrono_macro_name}({line_number}, \"{line.base_txt}\")"
+
 	def __repr__(self, only_functions=False):
+		global error_occured
 		if only_functions:
 			return '\n'.join(str(f) for f in sorted(self.functions, key=lambda f: f.start_index))
 		r = self.preamble
@@ -122,20 +163,29 @@ class File:
 		# the \ufeff is obscure
 		r = (r + self.content[last_index:]).replace(u"\ufeff", "")
 		if len(line_number_to_line) == 0:
-			# self.add_profiling was not called (-> line numbers were not updated -> no line was added to line_number_to_line)
+			# self.set_profiling was not called (-> line numbers were not updated -> no line was added to line_number_to_line)
 			return r
-		r = report_line_chrono_pattern.sub(lambda m: f"{report_chrono_macro_name}({m.group(1)}, \"{line_number_to_line[int(m.group(1))].base_txt}\")", r)
-		function_names = [f.function_name for f in self.functions]
-		for m in report_function_chrono_pattern.finditer(r):
+		r = report_line_chrono_pattern.sub(self.try_replace_report_line, r)
+		if error_occured: exit(1)
+		report_functions_matches = list(report_function_chrono_pattern.finditer(r))
+		for m in report_functions_matches:
 			name = m.group(1)
-			if name in function_names:
-				print(name)
+			f = []
+			if name in function_name_to_function:
+				f = function_name_to_function[name]
+				r = f"{r[:m.start()]}{f"{report_function_header_macro_name}({f.function_name}, {f.total_time}) {report_header_chrono_macro_name} {" ".join( f"{report_empty_line_chrono_macro_name if line.ignore else report_line_chrono_macro_name}({line.line_number}, \"{line.base_txt}\")" for line in f.lines)}"}{r[m.end():]}"
+			else:
+				print(f"function name {name} does not exists / is not profiled")
+				error_occured = True
+		if error_occured: exit(1)
 		return r
 
 get_line_prefix = lambda given_line_number = None: f"{open_chrono_macro_name}({(max_line_number if given_line_number == None else given_line_number):>{len(str(max_line_number))}}){" " * nb_space_line_prefix}" 
 
 class Function:
 	def __init__(self, decl, lines, start_index, end_index, first_body_line_number, function_name):
+		global function_name_to_function
+		self.base_decl = decl
 		self.decl = decl
 		# self.first_body_line_number = first_body_line_number
 		line_number = first_body_line_number
@@ -148,18 +198,21 @@ class Function:
 		self.start_index, self.end_index = start_index, end_index
 		self.closing = "\n}"
 		self.function_name = function_name
+		function_name_to_function[function_name] = self
+		self.total_time = "+".join(f"{total_elapsed_string}{line.line_number}" for line in lines if not line.ignore)
 
-	def add_profiling(self):
-		self.decl = f"{" " * len(get_line_prefix())}{self.decl}\n"
+	def set_profiling(self):
+		self.decl = f"{" " * len(get_line_prefix())}{self.base_decl}\n{self.function_name}_calls++;\n"
 		# max_line_width = max(len(f"{get_line_prefix(line.line_number)}{line.txt}") for line in self.lines)
 		for line in self.lines:
-			line.add_profiling()
+			line.set_profiling()
 		self.closing = f"\n{" " * len(get_line_prefix())}" + "}"
 
-	def update_line_numbers(self, line_number_offset):
+	# def update_line_numbers(self, line_number_offset):
+	def update_line_number_to_line(self):
 		global line_number_to_line
 		for line in self.lines:
-			line.line_number += line_number_offset
+			# line.line_number += line_number_offset
 			n = line.line_number
 			# add line to line_number_to_line
 			if n >= len(line_number_to_line):
@@ -176,7 +229,7 @@ class Line:
 	def __init__(self, ignore, txt):
 		self.ignore = ignore
 		self.txt = txt.replace("\t", " " * tab_width)
-		self.base_txt = txt
+		self.base_txt = self.txt
 		self.line_number = 0
 
 	def set_line_number(self, line_number):
@@ -188,8 +241,8 @@ class Line:
 		if n > max_line_width:
 			max_line_width = n
 
-	def add_profiling(self):
-		self.txt = f"{" " * len(get_line_prefix())}{self.txt}" if self.ignore else f"{get_line_prefix(self.line_number)}{self.txt}{" " * (max_line_width - (len(f"{get_line_prefix(self.line_number)}{self.txt}")) + nb_space_line_suffix)}{close_chrono_macro_name}({self.line_number})"
+	def set_profiling(self):
+		self.txt = f"{" " * len(get_line_prefix())}{self.base_txt}" if self.ignore else f"{get_line_prefix(self.line_number)}{self.base_txt}{" " * (max_line_width - (len(f"{get_line_prefix(self.line_number)}{self.base_txt}")) + nb_space_line_suffix)}{top_chrono_macro_name}({self.line_number})"
 
 	def __repr__(self):
 		return to_tabs(self.txt)
@@ -215,9 +268,9 @@ def handle_file_path(original_file_path, working_file_path):
 	with open(working_file_path, 'r', encoding='utf-8') as file: content = file.read()
 	matches = [match for match in profile_pattern.finditer(content)]
 	if len(matches) == 0:
-		print(f"found no match in {original_file_path}")
+		print(f"no function to profile found in {original_file_path}")
 		return
-	print(f"found match in {original_file_path}")
+	print(f"found {len(matches)} function to profile in {original_file_path}")
 	functions = []
 	for match in matches:
 		start_index, end_index = match.end(), 0
@@ -246,7 +299,7 @@ def handle_file_path(original_file_path, working_file_path):
 		functions.append(function)
 		# print(function.function_name)
 	file = File(content, functions)
-	file.add_profiling()
+	file.set_profiling()
 	file.write_to(working_file_path)
 
 def main():
