@@ -7,10 +7,15 @@ import sys, re, shutil, unicodedata
 # function declarations must be one line only
 # one line must equal one statement
 
+# MUST:
 # TODO: let C++ handle the whole parts of max_digits for Hits, Per Hit, Time and % Time (+ 1 + its precision or 0 i the case of Hits)
 # example with max time at 152.87... then C++ will compute 3 to which we add 1 for the . and its precision
 # example with max hits at 14 then C++ will compute 2 to which we add nothing because Hits is an integer
 
+# ASAP:
+# TODO: fix the bug around one_less_available_items.erase(one_less_available_items.begin() + i);
+
+# GOOD TO HAVE:
 # TODO: removing the limitations lol
 # TODO: put / move the chrono include at the very top
 
