@@ -184,7 +184,7 @@ class File:
 		rep_line_stats = " << ".join(f'{modifiers} << {value} << " "' for spacing, label, modifiers, value in self.line_stats[:-1])
 		
 		rep_function_stats = f'"Total Time: " << {total_time_modifiers} << function_name##_total_time << std::endl << "Call #: " << {call_count_modifiers} << function_name##_calls'
-		rep_function_line_stats = f'{rep_line_stats} << {self.line_stats[:-1][2]} << {self.line_stats[:-1][3]} << " "'
+		rep_function_line_stats = f'{rep_line_stats} << {self.line_stats[-1][2]} << {self.line_stats[-1][3]} << " "'
 		rep_empty_function_line_stats = f'{self.line_stats[0][2]} << {self.line_stats[0][3]} << "{" " * (function_delimiter_bar_length - line_count_max_digits)}" << " "'
 
 		self.preamble = f"""
@@ -221,7 +221,7 @@ std::ostream& operator<<(std::ostream& os, const thousand_separator& ts) {{
 
 #define {report_function_macro_name}(function_name, total_time) long function_name##_total_time = total_time; std::cout << std::endl << "Function name: " << #function_name << std::endl << {rep_function_stats} << std::endl;
 #define {report_function_header_macro_name} std::cout << std::endl << "{rep_function_header_top}" << std::endl << "{"=" * function_delimiter_bar_length}" << std::endl;
-#define {report_function_line_macro_name}(line_number, line_txt, function_name) std::cout << {rep_line_stats} << line_txt << std::endl;
+#define {report_function_line_macro_name}(line_number, line_txt, function_name) std::cout << {rep_function_line_stats} << line_txt << std::endl;
 #define {report_empty_function_line_macro_name}(line_number, line_txt) std::cout << {rep_empty_function_line_stats} << line_txt << std::endl;
 
 #define {report_line_header_macro_name} std::cout << std::endl << "{rep_header_top}" << std::endl << "{"=" * line_delimiter_bar_length}" << std::endl;
