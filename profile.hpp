@@ -37,10 +37,11 @@ public:
 
 struct function_t {{
 public:
-	// first_line_number == last_line_number if there is 1 line
-	// first_line_number == last_line_number == line of the function declaration if there is 0 line
+	file_t file;
+
 	long first_line_number;
 	long last_line_number;
+	long longest_line_number;
 
 	long nb_call;
 	// totals
@@ -48,13 +49,16 @@ public:
 	double time;
 	double per_hit;
 
-	file_t file;
+	std::string ignore_line_prefix;
+	std::string ignore_line_suffix;
 
-	function_t(file_t file, long first_line_number, long last_line_number);
+	function_t(long first_line_number, long last_line_number, long longest_line_number);
 }}
 
 struct line_t {{
 public:
+	file_t file;
+
 	long line_number;
 	long hits;
 	double time; // total time spent on this line
@@ -65,30 +69,28 @@ public:
 	std::string txt;
 	std::string suffix;
 
-	file_t file;
-
-	line_t(file_t file, std::string txt);
+	line_t(long line_number, std::string txt);
 }}
 
 struct single_line_t : public line_t {{
 public:
-	single_line_t(std::string txt, long line_number);
+	single_line_t(long line_number, std::string txt);
 }}
 
 struct function_line_t : public line_t {{
 public:
+	function_t function;
+
 	double hits_percentage;
 	double time_percentage;
 	double per_hit_percentage; // kind of weird to think about
 
 	bool ignore;
 
-	function_t function;
-
-	function_line_t(function_t function, std::string txt);
+	function_line_t(long line_number, std::string txt);
 }}
 
-std::unordered_map<std::string, file_t> files({len(files)});
+std::unordered_map<std::string, file_t> files;
 
 }}
 #endif /* PROFILE_HPP */
