@@ -15,6 +15,8 @@ struct {function_class_name} {{
 	long hits;
 	double time;
 	double per_hit;
+
+	
 }}
 
 struct {line_class_name} {{
@@ -33,7 +35,7 @@ public:
 }}
 
 struct {single_line_class_name} : public {line_class_name} {{
-
+	{line_class_name}(std::string txt, long line_number);
 }}
 
 struct {function_line_class_name} : public {line_class_name} {{
@@ -42,6 +44,8 @@ struct {function_line_class_name} : public {line_class_name} {{
 	double per_hit_percentage; // kind of weird to think about
 
 	bool ignore;
+
+	{function_line_class_name}(std::string txt, bool ignore);
 }}
 
 // lines[0] is a dummy since line numbers start at 1
