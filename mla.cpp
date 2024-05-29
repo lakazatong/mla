@@ -7,7 +7,8 @@
 #include <string>
 #include <iomanip>
 
-#include "profile_mla.hpp"
+#include "profile.hpp"
+#define profile
 
 #include "mla.hpp"
 

@@ -1,36 +1,16 @@
-#include "profile_{filename}.hpp"
-namespace {namespace_name} {{
+#include "profile.hpp"
 
-/*
-	long first_line_number;
-	long last_line_number;
+namespace {profile_namespace} {{
 
-	long nb_call;
-	// totals
-	long hits;
-	double time;
-	double per_hit;
-*/
-{function_class_name}::{function_class_name}() {{
+namespace {filename} {{
 
-}}
+	// lines[0] is a dummy since line numbers start at 1
+	// all lines that were not profiled will have an empty base_txt and a line_number of 0
+	lines_t lines{{ std::make_unique<{single_line_class_name}>("", 0), {", ".join(f"std::make_unique<{single_line_class_name}>({line.base_txt}, {line.line_number})" if isinstance(line, SingleLine) else f"std::make_unique<{function_line_class_name}>({line.base_txt})" for line in file.lines)} }};
+	functions_t functions{{ {", ".join(f"function_t({function.first_line_number}, {function.last_line_number})" for function in file.functions)} }};
+	file_t file{lines, functions};
+	files[{filename}] = file;
 
-{line_class_name}::{line_class_name}(std::string txt)
-	: line_number(0), hits(0), time(0), per_hit(0), prefix(""), suffix("") {{
-	// this is importat so that len(this.txt) is rightfully the number of characters
-	// this would not be true with tabs
-	txt = std::regex_replace(txt, tab_regex("\t"), spaces({tab_width}, ' '));
-	base_txt = txt;
-}}
-
-{single_line_class_name}::{single_line_class_name}(std::string txt, long line_number)
-	: {line_class_name}(txt), line_number(line_number) {{
-	lines[line_number] = this;
-}}
-
-{function_line_class_name}::{function_line_class_name}(std::string txt, bool ignore)
-	: {line_class_name}(txt), hits_percentage(0), time_percentage(0), per_hit_percentage(0) {{
-	ignore = anyMatch(txt, ignore_patterns);
 }}
 
 }}
