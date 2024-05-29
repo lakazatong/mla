@@ -48,7 +48,9 @@ public:
 	double time;
 	double per_hit;
 
-	function_t(long first_line_number, long last_line_number);
+	file_t file;
+
+	function_t(file_t file, long first_line_number, long last_line_number);
 }}
 
 struct line_t {{
@@ -63,7 +65,9 @@ public:
 	std::string txt;
 	std::string suffix;
 
-	line_t(std::string txt);
+	file_t file;
+
+	line_t(file_t file, std::string txt);
 }}
 
 struct single_line_t : public line_t {{
@@ -79,7 +83,9 @@ public:
 
 	bool ignore;
 
-	function_line_t(std::string txt);
+	function_t function;
+
+	function_line_t(function_t function, std::string txt);
 }}
 
 std::unordered_map<std::string, file_t> files({len(files)});

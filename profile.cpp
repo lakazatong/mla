@@ -19,9 +19,9 @@ file_t::file_t(lines, functions)
 	: lines(lines), functions(functions) {{
 }}
 
-function_t::function_t(lines_t lines, long first_line_number, long last_line_number)
+function_t::function_t(file_t file, long first_line_number, long last_line_number)
 	: first_line_number(first_line_number), last_line_number(last_line_number),
-	nb_call(0), hits(0), time(0), per_hit(0) {{
+	nb_call(0), hits(0), time(0), per_hit(0), file(file) {{
 	// function lines' line numbers are deduced
 	for (long line_number = first_line_number; line_number <= last_line_number; line_number++) {{
 		lines[line_number].line_number = line_number;
