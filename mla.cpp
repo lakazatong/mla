@@ -7,6 +7,8 @@
 #include <string>
 #include <iomanip>
 
+#include "profile_{filename}.hpp"
+
 #include "mla.hpp"
 
 using namespace std;

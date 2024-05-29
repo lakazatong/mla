@@ -394,6 +394,12 @@ inline unsigned int available_items_to_index(const vector<int>& available_items)
 	return index - 1;
 }
 
+class Line {
+public:
+
+}
+
+
 // @profile
                            void generate_all_carts(const vector<int>& available_items) {
 generate_all_carts_calls++;
