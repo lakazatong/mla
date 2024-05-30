@@ -352,7 +352,7 @@ inline unsigned int available_items_to_index(const vector<int>& available_items)
 	return index - 1;
 }
 
-// @profile
+// profile +
 void generate_all_carts(const vector<int>& available_items) {
 	if (available_items.size() == 1) {
 		// base case

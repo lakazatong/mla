@@ -2,19 +2,6 @@
 
 namespace {profile_namespace} {{
 
-std::vector<std::regex> ignore_patterns {{
-	{ignore_patterns_array}
-}};
-
-bool anyMatch(const std::string& txt, const std::vector<std::regex>& patterns) {{
-	for (const auto& pattern : patterns) {{
-		if (std::regex_search(txt, pattern)) {{
-			return true;
-		}}
-	}}
-	return false;
-}}
-
 file_t::file_t(lines, functions)
 	: lines(lines), functions(functions) {{
 	for (const auto& line : lines) {{

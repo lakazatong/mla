@@ -4,6 +4,7 @@
 #include <vector>
 #include <regex>
 #include <string>
+#include <chrono>
 
 #define line_t {line_class_name}
 #define lines_t std::vector<line_t>
@@ -20,11 +21,11 @@
 #define file_t {file_class_name}
 #define files_t std::vector<file_t>
 
+#define DEFINE_CHRONO(line_number) std::chrono::time_point<std::chrono::high_resolution_clock> start##line_number; std::chrono::time_point<std::chrono::high_resolution_clock> top##line_number; double total##line_number = 0; long hits##line_number = 0;
+#define START_CHRONO start##__LINE__ = std::chrono::high_resolution_clock::now();
+#define TOP_CHRONO top##__LINE__ = std::chrono::high_resolution_clock::now(); std::chrono::duration<double, std::milli> elapsed##__LINE__ = top##__LINE__ - start##__LINE__; total##__LINE__ += elapsed##__LINE__.count(); hits##__LINE__++; start##__LINE__ = top##__LINE__;
+
 namespace {profile_namespace} {{
-
-std::vector<std::regex> ignore_patterns;
-
-bool anyMatch(const std::string& txt, const std::vector<std::regex>& patterns);
 
 struct file_t {{
 public:
