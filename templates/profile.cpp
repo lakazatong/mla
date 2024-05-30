@@ -3,7 +3,7 @@
 namespace {profile_namespace} {{
 
 std::vector<std::regex> ignore_patterns {{
-	{',\n'.join(ignore_patterns)}
+	{ignore_patterns_array}
 }};
 
 bool anyMatch(const std::string& txt, const std::vector<std::regex>& patterns) {{
@@ -24,7 +24,7 @@ file_t::file_t(lines, functions)
 		function.file = this;
 
 		long longest_line_length = lines[function.longest_line_number].length();
-		function.ignore_line_prefix = std::string({len(start_chrono_macro_name)} + 1 + longest_line_length + 1 + {nb_space_line_prefix}, " ");
+		function.ignore_line_prefix = std::string({start_chrono_macro_name_length} + 1 + longest_line_length + 1 + {nb_space_line_prefix}, " ");
 		function.ignore_line_suffix = "";
 		std::ostringstream oss;
 		for (long line_number = function.first_line_number; line_number <= function.last_line_number; line_number++) {{
@@ -58,11 +58,11 @@ line_t::line_t(long line_number, std::string txt)
 	base_txt = txt;
 }}
 
-{single_line_class_name}::{single_line_class_name}(long line_number, std::string txt)
+single_line_t::single_line_t(long line_number, std::string txt)
 	: line_t(line_number, txt) {{
 }}
 
-{function_line_class_name}::{function_line_class_name}(long line_number, std::string txt)
+function_line_t::function_line_t(long line_number, std::string txt)
 	: line_t(line_number, txt),
 	hits_percentage(0), time_percentage(0), per_hit_percentage(0) {{
 	ignore = anyMatch(txt, ignore_patterns);
