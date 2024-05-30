@@ -393,7 +393,7 @@ void generate_all_carts(const vector<int>& available_items) {
 	}
 }
 
-// profile function+
+// profile function
 void compute_best_carts() {
 	vector<int> available_items;
 	for (int i = 0; i < all_items.size(); ++i) {
@@ -403,8 +403,8 @@ void compute_best_carts() {
 	generate_all_carts(available_items);
 	vector<Cart>& carts = all_carts[all_carts_length - 1];
 
-	// profile line   + 
-	int max_value = 0;
+	// profile line
+START_CHRONO(407)              int max_value = 0;          TOP_CHRONO(407)
 	for (auto& cart : carts) {
 		if (cart.set_value() > max_value) {
 			max_value = cart.value;

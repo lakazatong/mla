@@ -2,21 +2,6 @@
 
 namespace Profiled {
 
-std::vector<std::regex> ignore_patterns {
-	std::regex("^\\s*[{}]+\\s*$"),
-	std::regex("^\\s*//(?:a|[^a])*$"),
-	std::regex("^\\s*return;\\s*$")
-};
-
-bool anyMatch(const std::string& txt, const std::vector<std::regex>& patterns) {
-	for (const auto& pattern : patterns) {
-		if (std::regex_search(txt, pattern)) {
-			return true;
-		}
-	}
-	return false;
-}
-
 file_t::file_t(lines, functions)
 	: lines(lines), functions(functions) {
 	for (const auto& line : lines) {

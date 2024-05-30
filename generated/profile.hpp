@@ -27,10 +27,6 @@
 
 namespace Profiled {
 
-std::vector<std::regex> ignore_patterns;
-
-bool anyMatch(const std::string& txt, const std::vector<std::regex>& patterns);
-
 struct file_t {
 public:
 	// lines[0] is a dummy since line numbers start at 1
