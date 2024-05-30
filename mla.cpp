@@ -393,7 +393,7 @@ void generate_all_carts(const vector<int>& available_items) {
 	}
 }
 
-// @profile
+// @profile -
 void compute_best_carts() {
 	vector<int> available_items;
 	for (int i = 0; i < all_items.size(); ++i) {
