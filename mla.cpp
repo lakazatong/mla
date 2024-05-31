@@ -384,6 +384,7 @@ void generate_all_carts(const vector<int>& available_items) {
 				for (size_t j = 0; j < cart.items.size(); j++) {
 					merged.add_item(*all_items[cart.items[j]], cart.items_coords[j]);
 				}
+				// crashes here
 				merged.add_item(*all_items[removed_item_index], one_item_cart.items_coords[0]);
 				merged.set_canonical_form();
 				try_adding_cart(merged, index);
