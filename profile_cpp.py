@@ -4,10 +4,13 @@ from typing import List
 # ----------------------------------------------------------------------
 # Parameters
 
-add_profile_function_pattern = re.compile(r"\/\/\s*profile\s+function\s*(\+)\s*\n")
-remove_profile_function_pattern = re.compile(r"\/\/\s*profile\s+function\s*(-)\s*\n")
-add_profile_line_pattern = re.compile(r"\/\/\s*profile\s+line\s*(\+)\s*\n")
-remove_profile_line_pattern = re.compile(r"\/\/\s*profile\s+line\s*(-)\s*\n")
+# python does not support \h as far as I'm aware
+hspace_pat = r"[^\S\r\n]"
+add_profile_function_pattern = re.compile(rf"\/\/{hspace_pat}*profile{hspace_pat}+function{hspace_pat}*(\+){hspace_pat}*\n")
+remove_profile_function_pattern = re.compile(rf"\/\/{hspace_pat}*profile{hspace_pat}+function{hspace_pat}*(-){hspace_pat}*\n")
+add_profile_line_pattern = re.compile(rf"\/\/{hspace_pat}*profile{hspace_pat}+line{hspace_pat}*(\+){hspace_pat}*\n")
+remove_profile_line_pattern = re.compile(rf"\/\/{hspace_pat}*profile{hspace_pat}+line{hspace_pat}*(-){hspace_pat}*\n")
+include_profile_hpp_pattern = re.compile(rf"#include{hspace_pat}*\"generated\/profile\.hpp\"{hspace_pat}*")
 
 profile_namespace = "Profiled"
 line_class_name = "Line"
@@ -21,11 +24,17 @@ ignore_function_line_patterns = [
 	re.compile(r"^\s*//(?:a|[^a])*$"), # ignore single line comments
 	re.compile(r"^\s*return;\s*$") # ignore empty returns
 ]
-start_chrono_macro_name = "START_CHRONO"
-top_chrono_macro_name = "TOP_CHRONO"
 nb_space_line_prefix = 10
 nb_space_line_suffix = 10
 tab_width = 4
+define_chrono_macro_name = "DEFINE_CHRONO"
+start_chrono_macro_name = "START_CHRONO"
+top_chrono_macro_name = "TOP_CHRONO"
+
+# these are deduced and are not meant to be changed
+
+profile_line_prefix_pattern = re.compile(rf"{start_chrono_macro_name}\(\s*\d+\s*\){" " * nb_space_line_prefix}")
+profile_line_suffix_pattern = re.compile(rf"{" " * nb_space_line_suffix}{top_chrono_macro_name}\(\s*\d+\s*\)")
 
 # Parameters
 # ----------------------------------------------------------------------
@@ -43,7 +52,10 @@ def generate_profile_hpp(file):
 		single_line_class_name=single_line_class_name,
 		function_line_class_name=function_line_class_name,
 		function_class_name=function_class_name,
-		file_class_name=file_class_name
+		file_class_name=file_class_name,
+		define_chrono_macro_name=define_chrono_macro_name,
+		start_chrono_macro_name=start_chrono_macro_name,
+		top_chrono_macro_name=top_chrono_macro_name
 	)
 	with open("generated/profile.hpp", "w") as f:
 		f.write(formated)
@@ -72,7 +84,7 @@ def generate_profile_filename_cpp(file):
 		profile_namespace=profile_namespace,
 		file=file,
 		functions_array=", ".join(f"function_t({function.first_line_number}, {function.last_line_number}, {function.longest_line_number})" for function in file.functions),
-		lines_array=", ".join(f'std::make_unique<{"single_line_t" if isinstance(line, SingleLine) else "function_line_t"}>({line.line_number}, "{line.base_txt}")' for line in file.lines)
+		lines_array=", ".join(f'std::make_unique<{"single_line_t" if isinstance(line, SingleLine) else "function_line_t"}>({line.line_number}, "{line.txt.replace(" " * tab_width, "\t")}")' for line in file.lines)
 	)
 	with open(f"generated/profile_{file.filename}.cpp", "w") as f:
 		f.write(formated)
@@ -86,18 +98,32 @@ def generate_profile_filename_cpp(file):
 class Line:
 	def __init__(self, line_number, txt, start_index, end_index):
 		self.line_number = line_number
+		self.raw_txt = txt
 		self.txt = txt.replace("\t", " " * tab_width)
-		self.base_txt = self.txt
+		self.profiled_txt = self.txt
 		self.start_index = start_index
 		self.end_index = end_index
-		self.prefix = f"{start_chrono_macro_name}({line_number}){" " * nb_space_line_prefix}"
-		self.suffix = f"{" " * nb_space_line_suffix}{top_chrono_macro_name}({line_number})"
+		self.prefix = ""
+		self.suffix = ""
 
 	def set_profiling(self):
-		self.txt = f"{self.prefix}{self.base_txt}{self.suffix}"
+		self.prefix = f"{start_chrono_macro_name}({self.line_number}){" " * nb_space_line_prefix}"
+		self.suffix = f"{" " * nb_space_line_suffix}{top_chrono_macro_name}({self.line_number})"
+
+	def unset_profiling(self):
+		self.prefix = ""
+		self.suffix = ""
+
+	def undo_profiling(self):
+		# self.base_txt is already the result of add_profiling + set_profiling
+		# undo that
+		self.txt = profile_line_suffix_pattern.sub("", profile_line_prefix_pattern.sub("", self.raw_txt)).replace("\t", " " * tab_width)
+
+	def apply_profiling(self):
+		self.profiled_txt = f"{self.prefix}{self.txt}{self.suffix}"
 
 	def __repr__(self):
-		return self.txt
+		return self.profiled_txt
 
 	def __len__(self):
 		return len(self.__repr__())
@@ -140,13 +166,29 @@ class File:
 		self.preamble = ""
 
 	def set_profiling(self):
-		# doing it this way makes the function's profiling take priority over single line profiling
-		# in the end reporting the function still reports all lines, but
-		# doing it the other way around would not set the % of the single line.s
 		for line in self.lines:
 			line.set_profiling()
 		for function in self.functions:
 			function.set_profiling()
+
+	def unset_profiling(self):
+		for line in self.lines:
+			line.unset_profiling()
+		for function in self.functions:
+			function.unset_profiling()
+	
+	def undo_profiling(self):
+		for line in self.lines:
+			line.undo_profiling()
+		for function in self.functions:
+			function.undo_profiling()
+
+	def apply_profiling(self):
+		# doing it this way makes the function's profiling take priority over single line profiling
+		for line in self.lines:
+			line.apply_profiling()
+		for function in self.functions:
+			function.apply_profiling()
 
 	def write_to(self, path):
 		with open(path, "w", encoding="utf-8") as f:
@@ -183,13 +225,25 @@ def handle_add_profile_lines(matches, content):
 		line_number = before_line.count("\n") + 1
 		end_index = len(before_line) + content[start_index:].find("\n")
 		line_str = content[start_index:end_index]
-		r.append(SingleLine(line_number, line_str, start_index, end_index))
+		sl = SingleLine(line_number, line_str, start_index, end_index)
+		sl.set_profiling()
+		r.append(sl)
 	return r
 
 def handle_remove_profile_lines(matches, content):
-	for m in matches:
-		print(m)
-	return []
+	r = []
+	for m, offset in matches:
+		# right on the first character of the line we are interested in
+		start_index = m.end() - offset + 1
+		before_line = content[:start_index]
+		# the next non empty line number after the match
+		line_number = before_line.count("\n") + 1
+		end_index = len(before_line) + content[start_index:].find("\n")
+		line_str = content[start_index:end_index]
+		sl = SingleLine(line_number, line_str, start_index, end_index)
+		sl.undo_profiling()
+		r.append(sl)
+	return r
 
 def handle_file_path(file_path):
 	content = ""
@@ -253,11 +307,11 @@ def handle_file_path(file_path):
 
 	filename = os.path.splitext(os.path.basename(file_path))[0]
 	file = File(filename, content, lines, functions)
+	file.apply_profiling()
 	generate_profile_hpp(file)
 	generate_profile_cpp(file)
 	generate_profile_filename_cpp(file)
-	file.set_profiling()
-	file.write_to(os.path.join(os.path.dirname(file_path), f"{filename}_profiled.cpp"))
+	# file.write_to(os.path.join(os.path.dirname(file_path), f"{filename}_profiled.cpp"))
 	print(f"{file_path} done")
 
 # Input C++ file.s handling (scan and add/remove profiling macros)

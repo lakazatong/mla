@@ -7,8 +7,7 @@
 #include <string>
 #include <iomanip>
 
-#include "profile.hpp"
-#define profile
+#include "generated/profile.hpp"
 
 #include "mla.hpp"
 
@@ -78,15 +77,15 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec) {
 	return os;
 }
 
-constexpr unsigned long long factorial(int n) {
-	unsigned long long result = 1;
+constexpr unsigned factorial(int n) {
+	unsigned result = 1;
 	for (int i = 2; i <= n; ++i) {
 		result *= i;
 	}
 	return result;
 }
 
-constexpr unsigned long long nChooseK(int n, int k) {
+constexpr unsigned nChooseK(int n, int k) {
 	return factorial(n) / (factorial(k) * factorial(n - k));
 }
 
@@ -465,7 +464,7 @@ int main() {
 	// cout << "all_carts.size() = " << all_carts.size() << endl;
 	// cout << "all_carts.capacity() = " << all_carts.capacity() << endl;
 	
-	for (int i = 0; i < all_carts_length; i++) {
+	for (unsigned i = 0; i < all_carts_length; i++) {
 		// worst case is when n items are of shape 1x1
 		// meaning the number of possible carts is factorial
 		// 
@@ -475,8 +474,8 @@ int main() {
 		// cart_size! * (n choose cart_size)	if n > cart_size
 		// 
 		// we do this to help push back
-		unsigned int n = count_ones(i);
-		constexpr unsigned int cart_size_fact = factorial(cart_size);
+		unsigned n = count_ones(i);
+		constexpr unsigned cart_size_fact = factorial(cart_size);
 		all_carts[i].resize(n == cart_size ? cart_size_fact :
 			n > cart_size ? cart_size_fact * nChooseK(n, cart_size) :
 			cart_size_fact / factorial(cart_size - n));
@@ -489,6 +488,7 @@ int main() {
 	}
 	one_item_carts_index.resize(all_items_length);
 	compute_best_carts();
+	cout << "done" << endl;
 	/*
 	for (const auto& cart : all_carts[all_carts_length - 1]) {
 		cout << cart.to_string() << endl;
