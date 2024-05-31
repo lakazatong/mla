@@ -6,6 +6,8 @@ from typing import List
 # define chronos after the #include "profile.hpp"
 # make // profile line + and - work in place with profile.hpp included
 # single line reports
+# find shortest unique identifier for macro names
+# remove line number in start chrono and top chrono macro parameters
 
 # ----------------------------------------------------------------------
 # Parameters
