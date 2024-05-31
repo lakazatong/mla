@@ -1,6 +1,12 @@
 import re, os, sys
 from typing import List
 
+# TODO:
+# add meta data (longest profiled line number present in the file to align line number of all single line)
+# define chronos after the #include "profile.hpp"
+# make // profile line + and - work in place with profile.hpp included
+# single line reports
+
 # ----------------------------------------------------------------------
 # Parameters
 
