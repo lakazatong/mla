@@ -1,0 +1,154 @@
+{
+  "cart_width": 7,
+  "cart_height": 5,
+  "features": {
+    "Non-discardable": "Once obtained, these goods must be placed into either the cart or the Attribute Stone spaces.",
+    "Non-devourable": "These goods cannot be placed into the Attribute Stone."
+  },
+  "attribute_stone_width": 3,
+  "attribute_stone_height": 3,
+  "effect": "The total value is the sum of all goods in the cart, and a fully loaded cart with no damage will receive a $20 value bonus for each cart space.",
+  "items": [
+    {
+      "name": "Attribute Stone",
+      "category": "Lv.17",
+      "value": 580,
+      "shape": [
+        [1]
+      ],
+      "feature": "Non-discardable,Non-devourable",
+      "effect": "Possessing mysterious, black hole-like power, this gem can devour all and grant formidable energy. Its holder gains the following Attribute Bonuses:\nDMG Increase +30%\nDMG Reduce +30%\nHP +85%\nAttack +85%"
+    },
+    {
+      "name": "Attribute Stone",
+      "category": "Lv.18",
+      "value": 610,
+      "shape": [
+        [1]
+      ],
+      "feature": "Non-discardable,Non-devourable",
+      "effect": "Possessing mysterious, black hole-like power, this gem can devour all and grant formidable energy. Its holder gains the following Attribute Bonuses:\nDMG Increase +30%\nDMG Reduce +30%\nHP +90%\nAttack +90%"
+    },
+    {
+      "name": "Coldwater Octopus",
+      "category": "Food",
+      "Rarity": "Normal Goods",
+      "value": 700,
+      "shape": [
+        [1, 1, 1],
+        [1, 1, 0],
+        [1, 0, 0]
+      ]
+    },
+    {
+      "name": "Blue Fire Prawn",
+      "category": "Food",
+      "Rarity": "Rare Goods",
+      "value": 480,
+      "shape": [
+        [1, 1],
+        [0, 1]
+      ]
+    },
+    {
+      "name": "Ritual Porcelain",
+      "category": "Antique",
+      "Rarity": "Normal Goods",
+      "value": 180,
+      "shape": [
+        [1, 1]
+      ]
+    },
+    {
+      "name": "Ritual Porcelain",
+      "category": "Antique",
+      "Rarity": "Rare Goods",
+      "value": 270,
+      "shape": [
+        [1, 1]
+      ]
+    },
+    {
+      "name": "Gilded Sacred Lamp",
+      "category": "Antique",
+      "Rarity": "Rare Goods",
+      "value": 480,
+      "shape": [
+        [1, 1],
+        [1, 0]
+      ]
+    },
+    {
+      "name": "Vital Goods",
+      "Rarity": "Vital Goods",
+      "value": 800,
+      "shape": [
+        [1, 0],
+        [1, 1],
+        [0, 1]
+      ],
+      "feature": "Non-discardable,Non-devourable"
+    },
+    {
+      "name": "Cadian Goblet",
+      "category": "Antique",
+      "Rarity": "Rare Goods",
+      "value": 480,
+      "shape": [
+        [1, 1],
+        [0, 1]
+      ]
+    },
+    {
+      "name": "Gleaming Earrings",
+      "category": "Antique",
+      "Rarity": "Normal Goods",
+      "value": 40,
+      "shape": [
+        [1]
+      ],
+      "effect": "Increase the value of each adjacent Rare Goods by 20."
+    },
+    {
+      "name": "Gleaming Earrings",
+      "category": "Antique",
+      "Rarity": "Rare Goods",
+      "value": 60,
+      "shape": [
+        [1]
+      ],
+      "effect": "Increase the value of each adjacent Rare Goods by 30."
+    },
+    {
+      "name": "Plains Boots",
+      "category": "Weapon",
+      "Rarity": "Normal Goods",
+      "value": 300,
+      "shape": [
+        [0, 1],
+        [1, 1]
+      ]
+    },
+    {
+      "name": "Plains Boots",
+      "category": "Weapon",
+      "Rarity": "Rare Goods",
+      "value": 480,
+      "shape": [
+        [0, 1],
+        [1, 1]
+      ]
+    },
+    {
+      "name": "Luminescent Lamp",
+      "category": "Antique",
+      "Rarity": "Normal Goods",
+      "value": 400,
+      "shape": [
+        [0, 1],
+        [0, 1],
+        [1, 1]
+      ]
+    }
+  ]
+}

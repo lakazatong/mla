@@ -222,6 +222,27 @@ void Cart::compress_attributes() {
 	// cells_as_number <<= trailing_zeros_length;
 }
 
+/*
+
+to hash x0, x1, ..., x(n-1), xn with x0 in d0, x1 in d1, ..., x(n-1) in d(n-1) and xn in dn
+we can do:
+hash(x0, x1, ..., x(n-1), xn) = x0 * card(d1) + x1 * card(d2) + ... + d(n-1) * card(dn) + dn
+we could subtract hash(min(d0), min(d1), ..., min(dn)) = min(d0) * card(d1) + min(d1) * card(d2) + ... + min(d(n-1)) * card(dn) + min(dn)
+if we want the hashes to start at 0
+taking x0, x1, ..., xn in [[0, k-1]] yields the base k
+
+example with x0 in d0 = {1, 2} and x1 in d1 = {1, 2, 3}
+
+11 -> 1*3+1 = 4 - 4 = 0
+12 -> 1*3+2 = 5 - 4 = 1
+13 -> 1*3+3 = 6 - 4 = 2
+
+21 -> 2*3+1 = 7 - 4 = 3
+22 -> 2*3+2 = 8 - 4 = 4
+23 -> 2*3+3 = 9 - 4 = 5
+
+*/
+
 void Cart::set_canonical_form() {
 	canonical_form.clear();
 	for (size_t i = 0; i < items.size(); ++i) {
