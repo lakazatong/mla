@@ -1,6 +1,16 @@
 import itertools, json, colorsys
 
-# TODO: look at line 184
+# TODO: separer generate_carts et generate_carts_with_effect
+
+# en supposont qu'on a une config d'item qui a une size <= taille du cart
+
+# si < taille du cart:
+# si aucun item a effet: renvoyer premiere config qui les fait tous rentrer
+# sinon: renvoyer la config qui fait tout rentrer avec le + de bonus value
+
+# si == taille du cart:
+# si aucun item a effet: renvoyer premiere config qui est full
+# sinon: renvoyer la config full avec le + de bonus value
 
 def insert_in_sorted(lst, item, key=lambda x: x):
 	for i in range(len(lst)):
@@ -35,8 +45,8 @@ def custom_hash_coeffs(ranges):
 	# yes the last range is ignored, each number only has to skip all possible values of the precedent ones
 	# so custom_hash([1, 2, 3], [10, 10, 10]) == 321, here how many values the 3 can take is not our concern
 	# to successfully hash the numbers 1 2 and 3
-	for i in range(len(ranges)-1):
-		coeffs.append(coeffs[i] * ranges[i + 1])
+	for i in range(1, len(ranges)):
+		coeffs.append(ranges[i - 1] * coeffs[i - 1])
 	return coeffs
 
 def custom_hash(numbers, coeffs):
@@ -45,36 +55,43 @@ def custom_hash(numbers, coeffs):
 	return sum(coeffs[i] * numbers[i] for i in range(len(numbers)))
 
 class Cart:
-	def __init__(self, config, items_index, items_position):
+	def __init__(self, config, available_items_index, items_index, items_position, check_uniqueness):
+		# bad naming but indices in items_index are meant to index available_items_index that gives items' index in the config items array
 		# assumes given argument make up for a valid Cart (no overlap)
 		if len(items_index) != len(items_position):
 			raise ValueError("len(items_index) != len(items_position)")
 		self.config = config
+		self.available_items_index = available_items_index
 		self.items = config["items"]
 		self.cart_width, self.cart_height = config["cart_width"], config["cart_height"]
+		self.check_uniqueness = check_uniqueness
 		# if so the caller is responsible for assigning the following attributes
 		# space, items_index, items_position
 		# as well as calling set_hashed_items on it after its items were set, and set_value
 		if len(items_index) == 0: return
 		self.space = [[-1 for _ in range(self.cart_width)] for _ in range(self.cart_height)]
 		for k in range(len(items_index)):
-			item_index = items_index[k]
+			available_item_index = items_index[k]
 			i0, j0 = items_position[k]
+			item_index = available_items_index[available_item_index]
 			item = self.items[item_index]
 			shape = item["shape"]
 			for i in range(item["height"]):
 				tmp = i0 + i
 				for j in range(item["width"]):
-					if shape[i][j] != 0:
-						self.space[tmp][j0 + j] = item_index
+					if shape[i][j] == 0: continue
+					self.space[tmp][j0 + j] = available_item_index
 		self.items_index = items_index
 		self.items_position = items_position
 		# hash now since it will be reused a lot
-		self.set_hashed_items()
+		if check_uniqueness:
+			self.set_hashed_items()
 		self.set_value()
 
-	def try_merge(self, item_index, item_position):
+	@profile
+	def try_merge(self, available_item_index, item_position):
 		# returns None if it creates an overlap or a new cart with this item added
+		item_index = self.available_items_index[available_item_index]
 		item = self.items[item_index]
 		shape = item["shape"]
 		i0, j0 = item_position
@@ -82,21 +99,17 @@ class Cart:
 		for i in range(item["height"]):
 			tmp = i0 + i
 			for j in range(item["width"]):
-				if self.space[tmp][j0 + j] != -1 and shape[i][j] != 0:
-					return None
-				space_copy[tmp][j0 + j] = shape[i][j]
-		merged_cart = Cart(self.config, [], [])
+				if shape[i][j] == 0: continue
+				if space_copy[tmp][j0 + j] != -1: return None
+				space_copy[tmp][j0 + j] = available_item_index
+		merged_cart = Cart(self.config, self.available_items_index, [], [], self.check_uniqueness)
 		merged_cart.space = space_copy
 		# copy items' index and position
-		merged_cart.items_index = [i for i in self.items_index]
-		merged_cart.items_position = [pos for pos in self.items_position]
+		merged_cart.items_index = [i for i in self.items_index] + [available_item_index]
+		merged_cart.items_position = [pos for pos in self.items_position] + [item_position]
 
-		# add the merged item
-		index = insert_in_sorted(merged_cart.items_index, item_index)
-		merged_cart.items_index.insert(index, item_index)
-		merged_cart.items_position.insert(index, item_position)
-
-		merged_cart.set_hashed_items()
+		if self.check_uniqueness:
+			merged_cart.set_hashed_items()
 		merged_cart.set_value()
 		
 		return merged_cart
@@ -173,16 +186,17 @@ class Cart:
 		return self.value
 
 	# not true deep equality, but rather "equivalent"
-	def __equal__(self, other):
+	def __eq__(self, other):
 		# make sure this won't happen by the caller
-		# n = len(self.items_index)
-		# if n != len(other.items_index):
-		# 	return False
-		for i in range(len(self.items_index)):
+		if len(self.items_index) != len(other.items_index):
+			print("__eq__: impossible case reached")
+			exit(1)
+		for i in range(len(self.hashed_items)):
 			if self.hashed_items[i] != other.hashed_items[i]:
 				return False
-		# TODO: ??????????????????? figure out why this never prints ???????????????????
-		print("found two equivalent cart")
+		print("found two equivalent cart:")
+		print(self)
+		print(other)
 		return True
 
 	def set_hashed_items(self):
@@ -201,18 +215,17 @@ class Cart:
 		
 		coeffs = custom_hash_coeffs([self.cart_width, self.cart_height, 0])
 		# hash x, y and type of all items
-		offset = self.items_index[0] # == min(self.items_index)
-		# we want the items' index (<=> type + rarity), hence the offset + i
 		self.hashed_items = []
 		for i in range(len(self.items_index)):
-			item_index = self.items_index[i]
+			available_item_index = self.items_index[i]
 			item_position = self.items_position[i]
+			item_index = self.available_items_index[available_item_index]
 			self.hashed_items.append(custom_hash([item_position[1], item_position[0], item_index], coeffs))
 
-		# since self.items_index is sorted, the hashes are sorted by type as well
+		self.hashed_items = sorted(self.hashed_items)
 		return self.hashed_items
 
-		# we could hash the hashes as such:
+		# we could hash the hashes as such (or rather something among the lines of lol):
 		# the range of an item hash
 		# hashed_range = len(self.items) * self.cart_width * self.cart_height
 		# coeffs = custom_hash_coeffs([hashed_range] * len(hashed_items)) <- 100% overflow lmao
@@ -233,7 +246,7 @@ class Cart:
 
 	def __repr__(self):
 		total_items = len(self.items)
-		colored_space = ""
+		colored_space = "\n"
 		for row in self.space:
 			for cell in row:
 				if cell == -1:
@@ -257,6 +270,8 @@ class CartSolver:
 		self.cart_width, self.cart_height = config["cart_width"], config["cart_height"]
 		self.cart_size = self.cart_width * self.cart_height
 		self.start_number_of_items = min(1, len(available_items_index))
+		self.check_uniqueness = any(available_items_index.count(i) > 1 for i in available_items_index)
+		# self.check_uniqueness = True
 		self.compute_items_sizes()
 		self.compute_items_possible_positions()
 		self.compute_all_indices_combinations()
@@ -277,7 +292,14 @@ class CartSolver:
 		n = len(self.available_items_index)
 		self.all_indices_combinations = []
 		for n_items in range(self.start_number_of_items, n + 1):
-			self.all_indices_combinations.append([(list(indices), indices_to_index(list(indices))) for indices in itertools.combinations(range(len(self.available_items_index)), n_items)])
+			tmp = []
+			for indices in itertools.combinations(range(n), n_items):
+				# sort by size so that in generate_carts the first carts to be generated are the ones with the largest items
+				# all to fill up the cart as soon as possible and avoid the explosion of the amount of generated carts
+				l = sorted(list(indices), key=lambda i: -self.items[self.available_items_index[i]]["size"])
+				indices_as_index = indices_to_index(l)
+				tmp.append((l, indices_as_index))
+			self.all_indices_combinations.append(tmp)
 
 	def init_caches(self):
 		nb_indices_as_index_possible = indices_to_index(range(len(self.available_items_index))) + 1
@@ -298,12 +320,15 @@ class CartSolver:
 	@profile
 	def generate_carts(self, left_indices, indices_as_index):
 		if len(self.carts_cache[indices_as_index]) != 0:
+			print("used cache uwu")
+			exit(0)
 			return self.carts_cache[indices_as_index]
-		print(f"generating all carts with {left_indices}")
 		if len(left_indices) == 1:
-			item_index = self.available_items_index[left_indices[0]]
-			r = [Cart(self.config, [item_index], [pos]) for pos in self.items[item_index]["possible_positions"]]
+			available_item_index = left_indices[0]
+			item_index = self.available_items_index[available_item_index]
+			r = [Cart(self.config, self.available_items_index, [available_item_index], [pos], self.check_uniqueness) for pos in self.items[item_index]["possible_positions"]]
 			self.carts_cache[indices_as_index] = [cart for cart in r]
+			print(f"generated all carts with {left_indices}")
 			return r
 		available_item_index = left_indices.pop()
 		item_index = self.available_items_index[available_item_index]
@@ -315,27 +340,39 @@ class CartSolver:
 		n = len(carts)
 		# try merging each of them with the removed item
 		for cart in carts:
+			# print(cart)
+			# print(item["possible_positions"])
 			for position in item["possible_positions"]:
-				merged_cart = cart.try_merge(item_index, position)
-				# append if (the merged cart is "interesting")
-				# merge succeeded (no overlap) and
-				# the merged cart has no items with effect or has some and have them add value and
-				# the merged cart is not equivalent to any other already found
-				if (merged_cart != None and
-					(not merged_cart.has_items_with_effect or merged_cart.has_items_with_effect and merged_cart.added_value > 0) and
-					all(cart != merged_cart for cart in r[n:])):
-					# print(f"adding one more cart with {len(left_indices) + 1} items")
-					r.append(merged_cart)
+				merged_cart = cart.try_merge(available_item_index, position)
+				# append if the merged cart is "interesting"
+				# merge succeeded (no overlap)
+				if merged_cart is None: continue
+				# the merged cart has no items with effect or has some and have them add value
+				if not merged_cart.has_items_with_effect or merged_cart.added_value > 0:
+					# the merged cart is not equivalent to any other already found
+					if self.check_uniqueness:
+						unique = True
+						for c in r:
+							if c == merged_cart:
+								unique = False
+								break
+						if unique:
+							r.append(merged_cart)
+					else:
+						r.append(merged_cart)
 		# cache generated carts
 		self.carts_cache[indices_as_index] = [cart for cart in r]
+		print(f"generated all carts with {left_indices + [available_item_index]}")
 		return r
 
 	def _solve(self, min_base_price):
 		must_have_items_index = [i for i in range(len(self.items)) if "Non-discardable" in self.items[i].get("feature", "").split(",") or self.items[i].get("rarity", "") == "Vital Goods"]
-		best_cart = Cart(self.config, [], [])
-		best_cart.value = 0
+		best_cart = Cart(self.config, [], [], [], False)
+		best_cart.value = -1
 		for n_items in range(self.start_number_of_items, len(self.available_items_index) + 1):
 			for indices, indices_as_index in self.all_indices_combinations[n_items - self.start_number_of_items]:
+
+				n = len(indices)
 
 				total_size = 0
 				if self.total_sizes_cache[indices_as_index] != -1:
@@ -358,32 +395,42 @@ class CartSolver:
 				
 				carts = self.generate_carts(indices, indices_as_index)
 				
-				if len(carts) > 0:
-					print(f'generated {len(carts)} "interesting" carts with {len(indices)} items')
+				# if len(carts) > 0:
+					# print(carts)
+					# print(f'^ generated {len(carts)} "interesting" carts with {n} items')
 				for cart in carts:
 					if cart.value > best_cart.value:
-						# print("found a better cart! c:")
+						# if best_cart.value != -1:
+							# print("found a better cart! c:")
 						best_cart = cart
 		return best_cart
 
 	def solve(self):
+
+		# cart1 = Cart(self.config, [0, 0], [(0, 0), (0, 1)])
+		# cart2 = Cart(self.config, [0, 0], [(0, 1), (0, 0)])
+		# print(cart1 == cart2)
+		# exit(0)
+
 		for min_base_price in range(7000, -1, -10):
-			print(f"trying with {min_base_price = }")
+			# print(f"trying with {min_base_price = }")
 			r = self._solve(min_base_price)
-			if r.value > 0:
+			if r.value != -1:
 				return r
 		return None
 
 def main():
+
 	content = None
 
 	with open("cart_config.json", "r") as f:
 		content = f.read()
 
 	config = json.loads(content)
-	solver = CartSolver(config, [0, 0])
+	solver = CartSolver(config, [1, 2, 3, 4, 5])
 	best_cart = solver.solve()
 
+	print("\n" + "-" * 40 + "\n\nbest cart found:")
 	print(best_cart)
 
 if __name__ == '__main__':
