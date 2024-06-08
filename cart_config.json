@@ -1,154 +1,930 @@
 {
-  "cart_width": 7,
-  "cart_height": 5,
-  "features": {
-    "Non-discardable": "Once obtained, these goods must be placed into either the cart or the Attribute Stone spaces.",
-    "Non-devourable": "These goods cannot be placed into the Attribute Stone."
-  },
-  "attribute_stone_width": 3,
-  "attribute_stone_height": 3,
-  "effect": "The total value is the sum of all goods in the cart, and a fully loaded cart with no damage will receive a $20 value bonus for each cart space.",
-  "items": [
-    {
-      "name": "Attribute Stone",
-      "category": "Lv.17",
-      "value": 580,
-      "shape": [
-        [1]
-      ],
-      "feature": "Non-discardable,Non-devourable",
-      "effect": "Possessing mysterious, black hole-like power, this gem can devour all and grant formidable energy. Its holder gains the following Attribute Bonuses:\nDMG Increase +30%\nDMG Reduce +30%\nHP +85%\nAttack +85%"
-    },
-    {
-      "name": "Attribute Stone",
-      "category": "Lv.18",
-      "value": 610,
-      "shape": [
-        [1]
-      ],
-      "feature": "Non-discardable,Non-devourable",
-      "effect": "Possessing mysterious, black hole-like power, this gem can devour all and grant formidable energy. Its holder gains the following Attribute Bonuses:\nDMG Increase +30%\nDMG Reduce +30%\nHP +90%\nAttack +90%"
-    },
-    {
-      "name": "Coldwater Octopus",
-      "category": "Food",
-      "Rarity": "Normal Goods",
-      "value": 700,
-      "shape": [
-        [1, 1, 1],
-        [1, 1, 0],
-        [1, 0, 0]
-      ]
-    },
-    {
-      "name": "Blue Fire Prawn",
-      "category": "Food",
-      "Rarity": "Rare Goods",
-      "value": 480,
-      "shape": [
-        [1, 1],
-        [0, 1]
-      ]
-    },
-    {
-      "name": "Ritual Porcelain",
-      "category": "Antique",
-      "Rarity": "Normal Goods",
-      "value": 180,
-      "shape": [
-        [1, 1]
-      ]
-    },
-    {
-      "name": "Ritual Porcelain",
-      "category": "Antique",
-      "Rarity": "Rare Goods",
-      "value": 270,
-      "shape": [
-        [1, 1]
-      ]
-    },
-    {
-      "name": "Gilded Sacred Lamp",
-      "category": "Antique",
-      "Rarity": "Rare Goods",
-      "value": 480,
-      "shape": [
-        [1, 1],
-        [1, 0]
-      ]
-    },
-    {
-      "name": "Vital Goods",
-      "Rarity": "Vital Goods",
-      "value": 800,
-      "shape": [
-        [1, 0],
-        [1, 1],
-        [0, 1]
-      ],
-      "feature": "Non-discardable,Non-devourable"
-    },
-    {
-      "name": "Cadian Goblet",
-      "category": "Antique",
-      "Rarity": "Rare Goods",
-      "value": 480,
-      "shape": [
-        [1, 1],
-        [0, 1]
-      ]
-    },
-    {
-      "name": "Gleaming Earrings",
-      "category": "Antique",
-      "Rarity": "Normal Goods",
-      "value": 40,
-      "shape": [
-        [1]
-      ],
-      "effect": "Increase the value of each adjacent Rare Goods by 20."
-    },
-    {
-      "name": "Gleaming Earrings",
-      "category": "Antique",
-      "Rarity": "Rare Goods",
-      "value": 60,
-      "shape": [
-        [1]
-      ],
-      "effect": "Increase the value of each adjacent Rare Goods by 30."
-    },
-    {
-      "name": "Plains Boots",
-      "category": "Weapon",
-      "Rarity": "Normal Goods",
-      "value": 300,
-      "shape": [
-        [0, 1],
-        [1, 1]
-      ]
-    },
-    {
-      "name": "Plains Boots",
-      "category": "Weapon",
-      "Rarity": "Rare Goods",
-      "value": 480,
-      "shape": [
-        [0, 1],
-        [1, 1]
-      ]
-    },
-    {
-      "name": "Luminescent Lamp",
-      "category": "Antique",
-      "Rarity": "Normal Goods",
-      "value": 400,
-      "shape": [
-        [0, 1],
-        [0, 1],
-        [1, 1]
-      ]
-    }
-  ]
+	"cart_width": 7,
+	"cart_height": 5,
+	"features": {
+		"Non-discardable": "Once obtained, these goods must be placed into either the cart or the Attribute Stone spaces.",
+		"Non-devourable": "These goods cannot be placed into the Attribute Stone."
+	},
+	"attribute_stone_width": 3,
+	"attribute_stone_height": 3,
+	"effect": "The total value is the sum of all goods in the cart, and a fully loaded cart with no damage will receive a $20 value bonus for each cart space.",
+	"items": [
+
+		{
+			"name": "Attribute Stone",
+			"category": "Lv.17",
+			"value": 580,
+			"shape": [
+				[1]
+			],
+			"feature": "Non-discardable,Non-devourable",
+			"effect": "Possessing mysterious, black hole-like power, this gem can devour all and grant formidable energy. Its holder gains the following Attribute Bonuses:\nDMG Increase +30%\nDMG Reduce +30%\nHP +85%\nAttack +85%"
+		},
+		{
+			"name": "Attribute Stone",
+			"category": "Lv.18",
+			"value": 610,
+			"shape": [
+				[1]
+			],
+			"feature": "Non-discardable,Non-devourable",
+			"effect": "Possessing mysterious, black hole-like power, this gem can devour all and grant formidable energy. Its holder gains the following Attribute Bonuses:\nDMG Increase +30%\nDMG Reduce +30%\nHP +90%\nAttack +90%"
+		},
+
+		{
+			"name": "Exorcism Ring",
+			"category": "Antique",
+			"rarity": "Normal Goods",
+			"value": 30,
+			"shape": [
+				[1]
+			],
+			"effect": "Increase the value of each adjacent Antique by 20."
+		},
+		{
+			"name": "Exorcism Ring",
+			"category": "Antique",
+			"rarity": "Rare Goods",
+			"value": 45,
+			"shape": [
+				[1]
+			],
+			"effect": "Increase the value of each adjacent Antique by 30."
+		},
+
+		{
+			"name": "Gleaming Earrings",
+			"category": "Antique",
+			"rarity": "Normal Goods",
+			"value": 40,
+			"shape": [
+				[1]
+			],
+			"effect": "Increase the value of each adjacent Rare Goods by 20."
+		},
+		{
+			"name": "Gleaming Earrings",
+			"category": "Antique",
+			"rarity": "Rare Goods",
+			"value": 60,
+			"shape": [
+				[1]
+			],
+			"effect": "Increase the value of each adjacent Rare Goods by 60."
+		},
+
+		{
+			"name": "Ancient Holy Grail",
+			"category": "Antique",
+			"rarity": "Normal Goods",
+			"value": 120,
+			"shape": [
+				[1],
+				[1]
+			],
+			"effect": "Increase its own value by 100 for each adjacent Attribute Stone."
+		},
+		{
+			"name": "Ancient Holy Grail",
+			"category": "Antique",
+			"rarity": "Rare Goods",
+			"value": 380,
+			"shape": [
+				[1],
+				[1]
+			],
+			"effect": "Increase its own value by 200 for each adjacent Attribute Stone."
+		},
+
+		{
+			"name": "Relic Hourglass",
+			"category": "Antique",
+			"rarity": "Normal Goods",
+			"value": 180,
+			"shape": [
+				[1],
+				[1]
+			]
+		},
+		{
+			"name": "Relic Hourglass",
+			"category": "Antique",
+			"rarity": "Rare Goods",
+			"value": 270,
+			"shape": [
+				[1],
+				[1]
+			]
+		},
+
+		{
+			"name": "Ritual Porcelain",
+			"category": "Antique",
+			"rarity": "Normal Goods",
+			"value": 180,
+			"shape": [
+				[1, 1]
+			]
+		},
+		{
+			"name": "Ritual Porcelain",
+			"category": "Antique",
+			"rarity": "Rare Goods",
+			"value": 270,
+			"shape": [
+				[1, 1]
+			]
+		},
+
+		{
+			"name": "Cadian Goblet",
+			"category": "Antique",
+			"rarity": "Normal Goods",
+			"value": 300,
+			"shape": [
+				[1, 1],
+				[0, 1]
+			]
+		},
+		{
+			"name": "Cadian Goblet",
+			"category": "Antique",
+			"rarity": "Rare Goods",
+			"value": 450,
+			"shape": [
+				[1, 1],
+				[0, 1]
+			]
+		},
+
+		{
+			"name": "Gilded Sacred Lamp",
+			"category": "Antique",
+			"rarity": "Normal Goods",
+			"value": 300,
+			"shape": [
+				[1, 1],
+				[1, 0]
+			]
+		},
+		{
+			"name": "Gilded Sacred Lamp",
+			"category": "Antique",
+			"rarity": "Rare Goods",
+			"value": 450,
+			"shape": [
+				[1, 1],
+				[1, 0]
+			]
+		},
+
+		{
+			"name": "Wasteland Horn",
+			"category": "Antique",
+			"rarity": "Normal Goods",
+			"value": 300,
+			"shape": [
+				[1, 0],
+				[1, 1]
+			]
+		},
+		{
+			"name": "Wasteland Horn",
+			"category": "Antique",
+			"rarity": "Rare Goods",
+			"value": 450,
+			"shape": [
+				[1, 0],
+				[1, 1]
+			]
+		},
+
+		{
+			"name": "Boulder Staff",
+			"category": "Antique",
+			"rarity": "Normal Goods",
+			"value": 400,
+			"shape": [
+				[0, 0, 1],
+				[1, 1, 1]
+			]
+		},
+		{
+			"name": "Boulder Staff",
+			"category": "Antique",
+			"rarity": "Rare Goods",
+			"value": 600,
+			"shape": [
+				[0, 0, 1],
+				[1, 1, 1]
+			]
+		},
+
+		{
+			"name": "Luminescent Lamp",
+			"category": "Antique",
+			"rarity": "Normal Goods",
+			"value": 400,
+			"shape": [
+				[0, 1],
+				[0, 1],
+				[1, 1]
+			]
+		},
+		{
+			"name": "Luminescent Lamp",
+			"category": "Antique",
+			"rarity": "Rare Goods",
+			"value": 600,
+			"shape": [
+				[0, 1],
+				[0, 1],
+				[1, 1]
+			]
+		},
+
+		{
+			"name": "Monastery Pot",
+			"category": "Antique",
+			"rarity": "Normal Goods",
+			"value": 400,
+			"shape": [
+				[1, 0],
+				[1, 1],
+				[1, 0]
+			]
+		},
+		{
+			"name": "Monastery Pot",
+			"category": "Antique",
+			"rarity": "Rare Goods",
+			"value": 600,
+			"shape": [
+				[1, 0],
+				[1, 1],
+				[1, 0]
+			]
+		},
+
+		{
+			"name": "Lakeside Harp",
+			"category": "Antique",
+			"rarity": "Normal Goods",
+			"value": 550,
+			"shape": [
+				[1, 1],
+				[1, 1],
+				[1, 0]
+			]
+		},
+		{
+			"name": "Lakeside Harp",
+			"category": "Antique",
+			"rarity": "Rare Goods",
+			"value": 825,
+			"shape": [
+				[1, 1],
+				[1, 1],
+				[1, 0]
+			]
+		},
+
+		{
+			"name": "Onion",
+			"category": "Food",
+			"rarity": "Normal Goods",
+			"value": 80,
+			"shape": [
+				[1]
+			]
+		},
+		{
+			"name": "Onion",
+			"category": "Food",
+			"rarity": "Rare Goods",
+			"value": 120,
+			"shape": [
+				[1]
+			]
+		},
+
+		{
+			"name": "Radish",
+			"category": "Food",
+			"rarity": "Normal Goods",
+			"value": 90,
+			"shape": [
+				[1, 1]
+			],
+			"effect": "Increases its own value by 30 for each adjacent Food."
+		},
+		{
+			"name": "Radish",
+			"category": "Food",
+			"rarity": "Rare Goods",
+			"value": 135,
+			"shape": [
+				[1, 1]
+			],
+			"effect": "Increases its own value by 45 for each adjacent Food."
+		},
+
+		{
+			"name": "Blue Fire Prawn",
+			"category": "Food",
+			"rarity": "Normal Goods",
+			"value": 300,
+			"shape": [
+				[1, 1],
+				[0, 1]
+			]
+		},
+		{
+			"name": "Blue Fire Prawn",
+			"category": "Food",
+			"rarity": "Rare Goods",
+			"value": 450,
+			"shape": [
+				[1, 1],
+				[0, 1]
+			]
+		},
+
+		{
+			"name": "Sugarcan",
+			"category": "Food",
+			"rarity": "Normal Goods",
+			"value": 300,
+			"shape": [
+				[1, 1, 1]
+			]
+		},
+		{
+			"name": "Sugarcan",
+			"category": "Food",
+			"rarity": "Rare Goods",
+			"value": 450,
+			"shape": [
+				[1, 1, 1]
+			]
+		},
+
+		{
+			"name": "Late Summer Eel",
+			"category": "Food",
+			"rarity": "Normal Goods",
+			"value": 400,
+			"shape": [
+				[0, 1, 1],
+				[1, 1, 0]
+			]
+		},
+		{
+			"name": "Late Summer Eel",
+			"category": "Food",
+			"rarity": "Rare Goods",
+			"value": 600,
+			"shape": [
+				[0, 1, 1],
+				[1, 1, 0]
+			]
+		},
+
+		{
+			"name": "Queen Lobster",
+			"category": "Food",
+			"rarity": "Normal Goods",
+			"value": 400,
+			"shape": [
+				[1, 1, 1],
+				[1, 0, 0]
+			]
+		},
+		{
+			"name": "Queen Lobster",
+			"category": "Food",
+			"rarity": "Rare Goods",
+			"value": 600,
+			"shape": [
+				[1, 1, 1],
+				[1, 0, 0]
+			]
+		},
+
+		{
+			"name": "Anglerfish",
+			"category": "Food",
+			"rarity": "Normal Goods",
+			"value": 550,
+			"shape": [
+				[1, 1, 1],
+				[0, 1, 1]
+			]
+		},
+		{
+			"name": "Anglerfish",
+			"category": "Food",
+			"rarity": "Rare Goods",
+			"value": 825,
+			"shape": [
+				[1, 1, 1],
+				[0, 1, 1]
+			]
+		},
+
+		{
+			"name": "Flying Fish",
+			"category": "Food",
+			"rarity": "Normal Goods",
+			"value": 550,
+			"shape": [
+				[1, 1, 1],
+				[0, 1, 0],
+				[0, 1, 0]
+			]
+		},
+		{
+			"name": "Flying Fish",
+			"category": "Food",
+			"rarity": "Rare Goods",
+			"value": 825,
+			"shape": [
+				[1, 1, 1],
+				[0, 1, 0],
+				[0, 1, 0]
+			]
+		},
+
+		{
+			"name": "Coldwater Octopus",
+			"category": "Food",
+			"rarity": "Normal Goods",
+			"value": 700,
+			"shape": [
+				[1, 1, 1],
+				[1, 1, 0],
+				[1, 0, 0]
+			]
+		},
+		{
+			"name": "Coldwater Octopus",
+			"category": "Food",
+			"rarity": "Rare Goods",
+			"value": 1050,
+			"shape": [
+				[1, 1, 1],
+				[1, 1, 0],
+				[1, 0, 0]
+			]
+		},
+
+		{
+			"name": "Northern Vale Cutlassfish",
+			"category": "Food",
+			"rarity": "Normal Goods",
+			"value": 700,
+			"shape": [
+				[0, 1, 1],
+				[0, 0, 1],
+				[1, 1, 1]
+			]
+		},
+		{
+			"name": "Northern Vale Cutlassfish",
+			"category": "Food",
+			"rarity": "Rare Goods",
+			"value": 1050,
+			"shape": [
+				[0, 1, 1],
+				[0, 0, 1],
+				[1, 1, 1]
+			]
+		},
+
+		{
+			"name": "King Crab",
+			"category": "Food",
+			"rarity": "Normal Goods",
+			"value": 900,
+			"shape": [
+				[1, 0, 1],
+				[1, 0, 1],
+				[1, 1, 1]
+			]
+		},
+		{
+			"name": "King Crab",
+			"category": "Food",
+			"rarity": "Rare Goods",
+			"value": 1350,
+			"shape": [
+				[1, 0, 1],
+				[1, 0, 1],
+				[1, 1, 1]
+			]
+		},
+
+		{
+			"name": "Manta Ray",
+			"category": "Food",
+			"rarity": "Normal Goods",
+			"value": 900,
+			"shape": [
+				[1, 1, 1],
+				[1, 1, 1],
+				[0, 1, 0]
+			]
+		},
+		{
+			"name": "Manta Ray",
+			"category": "Food",
+			"rarity": "Rare Goods",
+			"value": 1350,
+			"shape": [
+				[1, 1, 1],
+				[1, 1, 1],
+				[0, 1, 0]
+			]
+		},
+
+		{
+			"name": "Boulder Belt",
+			"category": "Weapon",
+			"rarity": "Normal Goods",
+			"value": 180,
+			"shape": [
+				[1, 1]
+			]
+		},
+		{
+			"name": "Boulder Belt",
+			"category": "Weapon",
+			"rarity": "Rare Goods",
+			"value": 270,
+			"shape": [
+				[1, 1]
+			]
+		},
+
+		{
+			"name": "Stream Dagger",
+			"category": "Weapon",
+			"rarity": "Normal Goods",
+			"value": 180,
+			"shape": [
+				[1],
+				[1]
+			]
+		},
+		{
+			"name": "Stream Dagger",
+			"category": "Weapon",
+			"rarity": "Rare Goods",
+			"value": 270,
+			"shape": [
+				[1],
+				[1]
+			]
+		},
+
+		{
+			"name": "Demons Scythe",
+			"category": "Weapon",
+			"rarity": "Normal Goods",
+			"value": 200,
+			"shape": [
+				[1, 1],
+				[1, 0],
+				[1, 0]
+			],
+			"effect": "After loading this goods, its value increases by 50 for every battle won, up to 300 points."
+		},
+		{
+			"name": "Demons Scythe",
+			"category": "Weapon",
+			"rarity": "Rare Goods",
+			"value": 300,
+			"shape": [
+				[1, 1],
+				[1, 0],
+				[1, 0]
+			],
+			"effect": "After loading this goods, its value increases by 50 for every battle won, up to 450 points."
+		},
+
+		{
+			"name": "Moniyan Lance",
+			"category": "Weapon",
+			"rarity": "Normal Goods",
+			"value": 300,
+			"shape": [
+				[1],
+				[1],
+				[1]
+			]
+		},
+		{
+			"name": "Moniyan Lance",
+			"category": "Weapon",
+			"rarity": "Rare Goods",
+			"value": 450,
+			"shape": [
+				[1],
+				[1],
+				[1]
+			]
+		},
+
+		{
+			"name": "Plains Boots",
+			"category": "Weapon",
+			"rarity": "Normal Goods",
+			"value": 300,
+			"shape": [
+				[0, 1],
+				[1, 1]
+			]
+		},
+		{
+			"name": "Plains Boots",
+			"category": "Weapon",
+			"rarity": "Rare Goods",
+			"value": 450,
+			"shape": [
+				[0, 1],
+				[1, 1]
+			]
+		},
+
+		{
+			"name": "Flamewind Scimitar",
+			"category": "Weapon",
+			"rarity": "Normal Goods",
+			"value": 400,
+			"shape": [
+				[0, 1],
+				[1, 1],
+				[1, 0]
+			]
+		},
+		{
+			"name": "Flamewind Scimitar",
+			"category": "Weapon",
+			"rarity": "Rare Goods",
+			"value": 600,
+			"shape": [
+				[0, 1],
+				[1, 1],
+				[1, 0]
+			]
+		},
+
+		{
+			"name": "Knights Shield",
+			"category": "Weapon",
+			"rarity": "Normal Goods",
+			"value": 400,
+			"shape": [
+				[1, 1],
+				[1, 1]
+			]
+		},
+		{
+			"name": "Knights Shield",
+			"category": "Weapon",
+			"rarity": "Rare Goods",
+			"value": 600,
+			"shape": [
+				[1, 1],
+				[1, 1]
+			]
+		},
+
+		{
+			"name": "Silvermoon Bow Arrows",
+			"category": "Weapon",
+			"rarity": "Normal Goods",
+			"value": 400,
+			"shape": [
+				[0, 1, 0],
+				[1, 1, 1]
+			]
+		},
+		{
+			"name": "Silvermoon Bow Arrows",
+			"category": "Weapon",
+			"rarity": "Rare Goods",
+			"value": 600,
+			"shape": [
+				[0, 1, 0],
+				[1, 1, 1]
+			]
+		},
+
+		{
+			"name": "Akakage Shuriken",
+			"category": "Weapon",
+			"rarity": "Normal Goods",
+			"value": 550,
+			"shape": [
+				[0, 1, 0],
+				[1, 1, 1],
+				[0, 1, 0]
+			]
+		},
+		{
+			"name": "Akakage Shuriken",
+			"category": "Weapon",
+			"rarity": "Rare Goods",
+			"value": 825,
+			"shape": [
+				[0, 1, 0],
+				[1, 1, 1],
+				[0, 1, 0]
+			]
+		},
+
+		{
+			"name": "Northern Vale Hammer",
+			"category": "Weapon",
+			"rarity": "Normal Goods",
+			"value": 550,
+			"shape": [
+				[1, 1, 0],
+				[1, 1, 1]
+			]
+		},
+		{
+			"name": "Northern Vale Hammer",
+			"category": "Weapon",
+			"rarity": "Rare Goods",
+			"value": 825,
+			"shape": [
+				[1, 1, 0],
+				[1, 1, 1]
+			]
+		},
+
+		{
+			"name": "Academy Armor",
+			"category": "Weapon",
+			"rarity": "Normal Goods",
+			"value": 700,
+			"shape": [
+				[1, 1],
+				[1, 1],
+				[1, 1]
+			]
+		},
+		{
+			"name": "Academy Armor",
+			"category": "Weapon",
+			"rarity": "Rare Goods",
+			"value": 1050,
+			"shape": [
+				[1, 1],
+				[1, 1],
+				[1, 1]
+			]
+		},
+
+		{
+			"name": "Explosive Meteor Hammer",
+			"category": "Weapon",
+			"rarity": "Normal Goods",
+			"value": 700,
+			"shape": [
+				[0, 1, 1],
+				[1, 1, 0],
+				[1, 1, 0]
+			]
+		},
+		{
+			"name": "Explosive Meteor Hammer",
+			"category": "Weapon",
+			"rarity": "Rare Goods",
+			"value": 1050,
+			"shape": [
+				[0, 1, 1],
+				[1, 1, 0],
+				[1, 1, 0]
+			]
+		},
+
+		{
+			"name": "Vital Goods",
+			"rarity": "Vital Goods",
+			"value": 800,
+			"shape": [
+				[0, 1],
+				[1, 1]
+			],
+			"feature": "Non-discardable,Non-devourable"
+		},
+		{
+			"name": "Vital Goods",
+			"rarity": "Vital Goods",
+			"value": 800,
+			"shape": [
+				[1, 0],
+				[1, 1]
+			],
+			"feature": "Non-discardable,Non-devourable"
+		},
+		{
+			"name": "Vital Goods",
+			"rarity": "Vital Goods",
+			"value": 800,
+			"shape": [
+				[1, 1],
+				[0, 1]
+			],
+			"feature": "Non-discardable,Non-devourable"
+		},
+		{
+			"name": "Vital Goods",
+			"rarity": "Vital Goods",
+			"value": 800,
+			"shape": [
+				[1, 1],
+				[1, 0]
+			],
+			"feature": "Non-discardable,Non-devourable"
+		},
+		{
+			"name": "Vital Goods",
+			"rarity": "Vital Goods",
+			"value": 800,
+			"shape": [
+				[1, 1, 1]
+			],
+			"feature": "Non-discardable,Non-devourable"
+		},
+		{
+			"name": "Vital Goods",
+			"rarity": "Vital Goods",
+			"value": 800,
+			"shape": [
+				[1],
+				[1],
+				[1]
+			],
+			"feature": "Non-discardable,Non-devourable"
+		},
+		{
+			"name": "Vital Goods",
+			"rarity": "Vital Goods",
+			"value": 800,
+			"shape": [
+				[1, 0],
+				[1, 1],
+				[0, 1]
+			],
+			"feature": "Non-discardable,Non-devourable"
+		},
+		{
+			"name": "Vital Goods",
+			"rarity": "Vital Goods",
+			"value": 800,
+			"shape": [
+				[1, 0],
+				[1, 1],
+				[1, 0]
+			],
+			"feature": "Non-discardable,Non-devourable"
+		},
+		{
+			"name": "Vital Goods",
+			"rarity": "Vital Goods",
+			"value": 800,
+			"shape": [
+				[0, 1],
+				[1, 1],
+				[0, 1]
+			],
+			"feature": "Non-discardable,Non-devourable"
+		},
+		{
+			"name": "Vital Goods",
+			"rarity": "Vital Goods",
+			"value": 800,
+			"shape": [
+				[0, 1],
+				[0, 1],
+				[1, 1]
+			],
+			"feature": "Non-discardable,Non-devourable"
+		},
+		{
+			"name": "Vital Goods",
+			"rarity": "Vital Goods",
+			"value": 800,
+			"shape": [
+				[1, 1, 1],
+				[0, 0, 1]
+			],
+			"feature": "Non-discardable,Non-devourable"
+		}
+
+	]
 }

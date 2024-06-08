@@ -13,9 +13,9 @@ import itertools, json, colorsys
 # sinon: renvoyer la config full avec le + de bonus value
 
 def get_color(index, total):
-	h = index / total
-	s = 1.0
-	v = 1.0
+	h = (index + 1) / (total + 1)
+	s = 1
+	v = 1
 	return tuple(round(i * 255) for i in colorsys.hsv_to_rgb(h, s, v))
 
 class Cart:
@@ -46,32 +46,9 @@ class Cart:
 				tmp = i0 + i
 				for j in range(item["width"]):
 					if shape[i][j] == 0: continue
-					self.space[tmp][j0 + j] = items_index
+					self.space[tmp][j0 + j] = item_index
 		
 		self.set_value()
-
-	@profile
-	def try_merge(self, item_index, item_position):
-		# returns None if it creates an overlap or a new cart with this item added
-		item = self.items[item_index]
-		shape = item["shape"]
-		i0, j0 = item_position
-		space_copy = [[self.space[i][j] for j in range(self.cart_width)] for i in range(self.cart_height)]
-		for i in range(item["height"]):
-			tmp = i0 + i
-			for j in range(item["width"]):
-				if shape[i][j] == 0: continue
-				if space_copy[tmp][j0 + j] != -1: return None
-				space_copy[tmp][j0 + j] = items_index
-		merged_cart = Cart(self.config, [], [])
-		merged_cart.space = space_copy
-		# copy items' index and position
-		merged_cart.items_index = [i for i in self.items_index] + [items_index]
-		merged_cart.items_position = [pos for pos in self.items_position] + [item_position]
-
-		merged_cart.set_value()
-		
-		return merged_cart
 
 	def full(self):
 		for i in range(self.cart_height):
@@ -182,6 +159,7 @@ class CartSolver:
 		for item in self.items:
 			item["possible_positions"] = [(i, j) for i in range(self.cart_height - item["height"] + 1) for j in range(self.cart_width - item["width"] + 1)]
 
+	@profile
 	def try_put(self, item_index, position, space):
 		item = self.items[item_index]
 		shape = item["shape"]
@@ -195,6 +173,7 @@ class CartSolver:
 				space_copy[tmp][j0 + j] = item_index
 		return space_copy
 
+	@profile
 	def _best_cart_with_effects(self, i, indices, positions, space):
 		if i == len(indices):
 			cart = Cart(self.config, [], [])
@@ -225,8 +204,9 @@ class CartSolver:
 		return None if best_cart.value == -1 else best_cart
 
 	def best_cart_with_effects(self, indices):
-		return _best_cart_with_effects(0, indices, [(0, 0) for _ in indices], [[-1 for _ in range(self.cart_width)] for _ in range(self.cart_height)])
+		return self._best_cart_with_effects(0, indices, [(0, 0) for _ in indices], [[-1 for _ in range(self.cart_width)] for _ in range(self.cart_height)])
 
+	@profile
 	def _find_cart(self, i, indices, positions, space):
 		if i == len(indices):
 			cart = Cart(self.config, [], [])
@@ -256,6 +236,7 @@ class CartSolver:
 	def find_cart(self, indices):
 		return self._find_cart(0, indices, [(0, 0) for _ in indices], [[-1 for _ in range(self.cart_width)] for _ in range(self.cart_height)])
 
+	@profile
 	def compute_all_carts(self):
 		self.all_interesting_carts = []
 		depth = 2
@@ -277,13 +258,18 @@ class CartSolver:
 
 				if cart != None:
 					found = True
+					print(cart)
+					# print(cart, indices)
+					# for row in cart.space:
+					# 	print(" ".join(f"{num:2}" for num in row))
 					self.all_interesting_carts.append(cart)
 			
 			if found:
 				depth -= 1
 				if depth == 0: break
-		print(self.all_interesting_carts)
+		# print(self.all_interesting_carts)
 
+	@profile
 	def _solve(self, min_base_price):
 		best_cart = Cart(self.config, [], [])
 		best_cart.value = -1
@@ -292,6 +278,7 @@ class CartSolver:
 				best_cart = cart
 		return best_cart
 
+	@profile
 	def solve(self):
 		for min_base_price in range(7000, -1, -10):
 			# print(f"trying with {min_base_price = }")
