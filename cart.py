@@ -26,10 +26,16 @@ class Cart:
 		self.config = config
 		self.items = config["items"]
 		self.cart_width, self.cart_height = config["cart_width"], config["cart_height"]
+		
 		# if so the caller is responsible for assigning the following attributes
-		# space, items_index, items_position
+		# items_index, items_position, space
 		# as well as calling set_value
 		if len(items_index) == 0: return
+
+		self.items_index = items_index
+		
+		self.items_position = items_position
+		
 		self.space = [[-1 for _ in range(self.cart_width)] for _ in range(self.cart_height)]
 		for k in range(len(items_index)):
 			item_index = items_index[k]
@@ -41,8 +47,7 @@ class Cart:
 				for j in range(item["width"]):
 					if shape[i][j] == 0: continue
 					self.space[tmp][j0 + j] = items_index
-		self.items_index = items_index
-		self.items_position = items_position
+		
 		self.set_value()
 
 	@profile
@@ -161,11 +166,10 @@ class CartSolver:
 		self.available_items_index = available_items_index
 		self.cart_width, self.cart_height = config["cart_width"], config["cart_height"]
 		self.cart_size = self.cart_width * self.cart_height
-		self.start_number_of_items = min(1, len(available_items_index))
-		self.must_have_items_index = [i for i in range(len(self.items)) if "Non-discardable" in self.items[i].get("feature", "").split(",") or self.items[i].get("rarity", "") == "Vital Goods"]
+		self.must_have_items_index = [i for i in available_items_index if "Non-discardable" in self.items[i].get("feature", "").split(",")]
 		self.compute_items_sizes()
 		self.compute_items_possible_positions()
-		self.compute_all_indices_combinations()
+		self.compute_all_carts()
 
 	def compute_items_sizes(self):
 		for item in self.items:
@@ -178,10 +182,85 @@ class CartSolver:
 		for item in self.items:
 			item["possible_positions"] = [(i, j) for i in range(self.cart_height - item["height"] + 1) for j in range(self.cart_width - item["width"] + 1)]
 
-	def compute_all_indices_combinations(self):
-		self.all_indices_combinations = []
-		for n_items in range(self.start_number_of_items, n + 1):
-			tmp = []
+	def try_put(self, item_index, position, space):
+		item = self.items[item_index]
+		shape = item["shape"]
+		i0, j0 = position
+		space_copy = [[space[i][j] for j in range(self.cart_width)] for i in range(self.cart_height)]
+		for i in range(item["height"]):
+			tmp = i0 + i
+			for j in range(item["width"]):
+				if shape[i][j] == 0: continue
+				if space_copy[tmp][j0 + j] != -1: return None
+				space_copy[tmp][j0 + j] = item_index
+		return space_copy
+
+	def _best_cart_with_effects(self, i, indices, positions, space):
+		if i == len(indices):
+			cart = Cart(self.config, [], [])
+			cart.items_index = [i for i in indices]
+			cart.items_position = [pos for pos in positions]
+			cart.space = [[space[i][j] for j in range(self.cart_width)] for i in range(self.cart_height)]
+			cart.set_value()
+			return cart
+		
+		item_index = indices[i]
+		item = self.items[item_index]
+		
+		best_cart = Cart(self.config, [], [])
+		best_cart.value = -1
+		for position in item["possible_positions"]:
+			new_space = self.try_put(item_index, position, space)
+			
+			if new_space == None: continue
+			
+			positions[i] = position
+			cart = self._best_cart_with_effects(i + 1, indices, positions, new_space)
+			
+			if cart == None: continue
+			
+			if cart.value > best_cart.value:
+				best_cart = cart
+		
+		return None if best_cart.value == -1 else best_cart
+
+	def best_cart_with_effects(self, indices):
+		return _best_cart_with_effects(0, indices, [(0, 0) for _ in indices], [[-1 for _ in range(self.cart_width)] for _ in range(self.cart_height)])
+
+	def _find_cart(self, i, indices, positions, space):
+		if i == len(indices):
+			cart = Cart(self.config, [], [])
+			cart.items_index = [i for i in indices]
+			cart.items_position = [pos for pos in positions]
+			cart.space = [[space[i][j] for j in range(self.cart_width)] for i in range(self.cart_height)]
+			cart.set_value()
+			return cart
+		
+		item_index = indices[i]
+		item = self.items[item_index]
+		
+		for position in item["possible_positions"]:
+			new_space = self.try_put(item_index, position, space)
+			
+			if new_space == None: continue
+			
+			positions[i] = position
+			cart = self._find_cart(i + 1, indices, positions, new_space)
+			
+			if cart == None: continue
+			
+			return cart
+		
+		return None
+
+	def find_cart(self, indices):
+		return self._find_cart(0, indices, [(0, 0) for _ in indices], [[-1 for _ in range(self.cart_width)] for _ in range(self.cart_height)])
+
+	def compute_all_carts(self):
+		self.all_interesting_carts = []
+		depth = 2
+		for n_items in range(len(self.available_items_index), -1, -1):
+			found = False
 			for indices in itertools.combinations(self.available_items_index, n_items):
 				
 				total_size = sum(self.items[i]["size"] for i in indices)
@@ -189,62 +268,31 @@ class CartSolver:
 
 				if any(i not in indices for i in self.must_have_items_index): continue
 
-				total_price = sum(self.items[i]["value"] for i in indices)
+				# sort by size to fill up the cart as fast as possible
+				indices = sorted(list(indices), key=lambda i: -self.items[i]["size"])
 
 				with_effects = any("effect" in self.items[i] and self.items[i]["name"] != "Attribute Stone" for i in indices)
 
-				# sort by size to fill up the cart as fast as possible
-				tmp.append((sorted(list(indices), key=lambda i: -self.items[i]["size"]), total_size, total_price, with_effects))
-			self.all_indices_combinations.append(tmp)
+				cart = self.best_cart_with_effects(indices) if with_effects else self.find_cart(indices)
 
-	def best_full_cart_with_effects(indices):
-
-
-	def best_cart_with_effects(indices):
-
-
-	def find_full_cart(indices):
-
-
-	def _find_cart(i, indices, positions):
-		if i == len(indices): return
-
-
-	def find_cart(indices):
-		positions = [(0, 0) for _ in indices]
-		self._find_cart(0, indices, positions)
-		return Cart(self.config, indices, positions)
+				if cart != None:
+					found = True
+					self.all_interesting_carts.append(cart)
+			
+			if found:
+				depth -= 1
+				if depth == 0: break
+		print(self.all_interesting_carts)
 
 	def _solve(self, min_base_price):
 		best_cart = Cart(self.config, [], [])
 		best_cart.value = -1
-		for n_items in range(self.start_number_of_items, len(self.available_items_index) + 1):
-			for indices, total_size, total_price, with_effects in self.all_indices_combinations[n_items - self.start_number_of_items]:
-
-				if total_price < min_base_price: continue
-				
-				if with_effects:
-					
-					cart = self.best_full_cart_with_effects(indices) if total_size == self.cart_size else self.best_cart_with_effects(indices)
-					
-					if cart.value > best_cart.value:
-						best_cart = cart
-
-				else:
-
-					if total_price <= best_cart.value: continue
-					
-					best_cart = self.find_full_cart(indices) if total_size == self.cart_size else self.find_cart(indices)
-
+		for cart in self.all_interesting_carts:
+			if cart.value >= min_base_price and cart.value > best_cart.value:
+				best_cart = cart
 		return best_cart
 
 	def solve(self):
-
-		# cart1 = Cart(self.config, [0, 0], [(0, 0), (0, 1)])
-		# cart2 = Cart(self.config, [0, 0], [(0, 1), (0, 0)])
-		# print(cart1 == cart2)
-		# exit(0)
-
 		for min_base_price in range(7000, -1, -10):
 			# print(f"trying with {min_base_price = }")
 			r = self._solve(min_base_price)
