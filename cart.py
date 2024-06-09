@@ -12,6 +12,9 @@ import itertools, json, colorsys
 # si aucun item a effet: renvoyer premiere config qui est full
 # sinon: renvoyer la config full avec le + de bonus value
 
+# ( 797 - 6 * 3 ) / 7
+# ( 568 - 4 * 3 ) / 5
+
 def get_color(index, total):
 	h = (index + 1) / (total + 1)
 	s = 1
@@ -100,19 +103,53 @@ class Cart:
 			# here effects are translated to effects to the cart value directly
 			# tho we still apply all effects before adding their base value as we should
 			match item_index:
+				# Exorcism Ring i(Normal)
+				case 2:
+					for adj in adjs[k]:
+						if self.items[adj]["category"] == "Antique":
+							self.added_value += 20
+				# Exorcism Ring (Rare)
+				case 3:
+					for adj in adjs[k]:
+						if self.items[adj]["category"] == "Antique":
+							self.added_value += 30
 				# Gleaming Earrings (Normal)
-				case 9:
+				case 4:
 					for adj in adjs[k]:
 						if self.items[adj]["rarity"] == "Rare Goods":
-							self.value += 20
 							self.added_value += 20
 				# Gleaming Earrings (Rare)
-				case 10:
+				case 5:
 					for adj in adjs[k]:
 						if self.items[adj]["rarity"] == "Rare Goods":
-							self.value += 30
+							self.added_value += 60
+				# Ancient Holy Grail (Normal)
+				case 6:
+					for adj in adjs[k]:
+						if self.items[adj]["name"] == "Attribute Stone":
+							self.added_value += 100
+				# Ancient Holy Grail (Rare)
+				case 7:
+					for adj in adjs[k]:
+						if self.items[adj]["name"] == "Attribute Stone":
+							self.added_value += 200
+				# Radish (Normal)
+				case 28:
+					for adj in adjs[k]:
+						if self.items[adj]["category"] == "Food":
 							self.added_value += 30
-		self.value += sum(self.items[i]["value"] for i in self.items_index)
+				# Radish (Rare)
+				case 29:
+					for adj in adjs[k]:
+						if self.items[adj]["category"] == "Food":
+							self.added_value += 45
+				# Demons Scythe (Normal)
+				case 54:
+					self.added_value += 300
+				# Demons Scythe (Rare)
+				case 55:
+					self.added_value += 450
+		self.value += sum(self.items[i]["value"] for i in self.items_index) + self.added_value
 		self.is_full = self.full()
 		if self.is_full:
 			self.value += self.cart_width * self.cart_height * 20
@@ -133,10 +170,6 @@ class Cart:
 
 class CartSolver:
 
-	carts_cache = []
-	total_sizes_cache = []
-	total_prices_cache = []
-
 	def __init__(self, config, available_items_index):
 		self.config = config
 		self.items = config["items"]
@@ -146,7 +179,7 @@ class CartSolver:
 		self.must_have_items_index = [i for i in available_items_index if "Non-discardable" in self.items[i].get("feature", "").split(",")]
 		self.compute_items_sizes()
 		self.compute_items_possible_positions()
-		self.compute_all_carts()
+		self.compute_all_interesting_carts()
 
 	def compute_items_sizes(self):
 		for item in self.items:
@@ -159,7 +192,7 @@ class CartSolver:
 		for item in self.items:
 			item["possible_positions"] = [(i, j) for i in range(self.cart_height - item["height"] + 1) for j in range(self.cart_width - item["width"] + 1)]
 
-	@profile
+	# @profile
 	def try_put(self, item_index, position, space):
 		item = self.items[item_index]
 		shape = item["shape"]
@@ -173,7 +206,7 @@ class CartSolver:
 				space_copy[tmp][j0 + j] = item_index
 		return space_copy
 
-	@profile
+	# @profile
 	def _best_cart_with_effects(self, i, indices, positions, space):
 		if i == len(indices):
 			cart = Cart(self.config, [], [])
@@ -206,7 +239,7 @@ class CartSolver:
 	def best_cart_with_effects(self, indices):
 		return self._best_cart_with_effects(0, indices, [(0, 0) for _ in indices], [[-1 for _ in range(self.cart_width)] for _ in range(self.cart_height)])
 
-	@profile
+	# @profile
 	def _find_cart(self, i, indices, positions, space):
 		if i == len(indices):
 			cart = Cart(self.config, [], [])
@@ -236,11 +269,11 @@ class CartSolver:
 	def find_cart(self, indices):
 		return self._find_cart(0, indices, [(0, 0) for _ in indices], [[-1 for _ in range(self.cart_width)] for _ in range(self.cart_height)])
 
-	@profile
-	def compute_all_carts(self):
+	# @profile
+	def compute_all_interesting_carts(self):
 		self.all_interesting_carts = []
 		depth = 2
-		for n_items in range(len(self.available_items_index), -1, -1):
+		for n_items in range(len(self.available_items_index), 0, -1):
 			found = False
 			for indices in itertools.combinations(self.available_items_index, n_items):
 				
@@ -258,7 +291,7 @@ class CartSolver:
 
 				if cart != None:
 					found = True
-					print(cart)
+					print(f"found new interesting cart with {indices}")
 					# print(cart, indices)
 					# for row in cart.space:
 					# 	print(" ".join(f"{num:2}" for num in row))
@@ -267,9 +300,7 @@ class CartSolver:
 			if found:
 				depth -= 1
 				if depth == 0: break
-		# print(self.all_interesting_carts)
 
-	@profile
 	def _solve(self, min_base_price):
 		best_cart = Cart(self.config, [], [])
 		best_cart.value = -1
@@ -278,7 +309,6 @@ class CartSolver:
 				best_cart = cart
 		return best_cart
 
-	@profile
 	def solve(self):
 		for min_base_price in range(7000, -1, -10):
 			# print(f"trying with {min_base_price = }")
