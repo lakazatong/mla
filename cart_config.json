@@ -12,23 +12,13 @@
 
 		{
 			"name": "Attribute Stone",
-			"category": "Lv.17",
-			"value": 580,
+			"category": "Lv.X",
+			"value": 0,
 			"shape": [
 				[1]
 			],
 			"feature": "Non-discardable,Non-devourable",
 			"effect": "Possessing mysterious, black hole-like power, this gem can devour all and grant formidable energy. Its holder gains the following Attribute Bonuses:\nDMG Increase +30%\nDMG Reduce +30%\nHP +85%\nAttack +85%"
-		},
-		{
-			"name": "Attribute Stone",
-			"category": "Lv.18",
-			"value": 610,
-			"shape": [
-				[1]
-			],
-			"feature": "Non-discardable,Non-devourable",
-			"effect": "Possessing mysterious, black hole-like power, this gem can devour all and grant formidable energy. Its holder gains the following Attribute Bonuses:\nDMG Increase +30%\nDMG Reduce +30%\nHP +90%\nAttack +90%"
 		},
 
 		{

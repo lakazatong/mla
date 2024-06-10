@@ -110,12 +110,12 @@ def compute_optimal_target_color_multithreaded(image):
 
 def proportion_of_color_hsv(img_array, hsv_target_color, threshold=0.1):
 	distances = image_to_distances_hsv(img_array, hsv_target_color)
-	# save_float_array_as_image(distances, "emotes/ss/1-cropped/test.png")
+	# save_float_array_as_image(distances, "assets/ss/1-items/test.png")
 	return np.count_nonzero(distances <= threshold) / distances.size
 
 def proportion_of_color_rgb(img_array, rgb_target_color, threshold=0.1):
 	distances = image_to_distances_rgb(img_array, rgb_target_color)
-	# save_float_array_as_image(distances, "emotes/ss/1-cropped/test.png")
+	# save_float_array_as_image(distances, "assets/ss/1-items/test.png")
 	return np.count_nonzero(distances <= threshold) / distances.size
 
 cart_width = 7
@@ -159,7 +159,7 @@ def scan_cart(cart_cells_array):
 	vital_goods_color = (82, 166, 165)
 	
 	cart_space = np.full((cart_height, cart_width), 0)
-	items_shape = []
+	items_info = []
 
 	def is_attribute_stone(i, j):
 		img_array = cart_cells_array[i][j]
@@ -183,7 +183,7 @@ def scan_cart(cart_cells_array):
 	for i in range(cart_height):
 		for j in range(cart_width):
 			if is_attribute_stone(i, j):
-				items_shape.append(([[1]], i, j))
+				items_info.append(([[1]], i, j))
 				cart_space[i, j] = k
 				k += 1
 				break
@@ -221,7 +221,7 @@ def scan_cart(cart_cells_array):
 				max_j = max(max_j, j)
 
 	if found_vital_goods:
-		items_shape.append((vital_goods_shape[min_i:max_i+1,min_j:max_j+1], min_i, min_j))
+		items_info.append((vital_goods_shape[min_i:max_i+1,min_j:max_j+1], min_i, min_j))
 		k += 1
 
 	def is_empty(i, j):
@@ -275,10 +275,10 @@ def scan_cart(cart_cells_array):
 			mins = [cart_height, -1, cart_width, -1]
 			item_shape = np.full((cart_height, cart_width), 0)
 			explore_item(i, j, k, mins, item_shape)
-			items_shape.append((item_shape[mins[0]:mins[1]+1,mins[2]:mins[3]+1], mins[0], mins[2]))
+			items_info.append((item_shape[mins[0]:mins[1]+1,mins[2]:mins[3]+1], mins[0], mins[2]))
 			k += 1
 
-	return items_shape, cart_space
+	return items_info, cart_space
 
 coords = np.array([
 	(271, 692, 149, 149),
@@ -322,37 +322,33 @@ coords = np.array([
 	(880, 1606, 149, 148)
 ]).reshape(cart_height, cart_width, 4)
 
-def main():
-	folder_path = "emotes/ss"
-	for file_path in os.listdir(folder_path):
-		if not file_path.endswith('.png'): continue
-		cart_img_path = os.path.join(folder_path, file_path)
-		cart_cells_img, cart_cells_array = cut_cart(cart_img_path, coords)
-		items_shape, cart_space = scan_cart(cart_cells_array)
-		
-		save_path = os.path.join(folder_path, f"{os.path.splitext(os.path.basename(file_path))[0]}-cropped").replace("\\", "/")
-		os.makedirs(save_path, exist_ok=True)
-		clear_folder(save_path)
-		
-		for k in range(len(items_shape)):
-			item_shape, item_i, item_j = items_shape[k]
-			item_top_left_cell_i, item_top_left_cell_j = coords[item_i,item_j,:2]
-			item_height, item_width = len(item_shape), len(item_shape[0])
-			# we subtract some padding because the in between margins are overlapping on the final merged image
-			item_image_height = sum(cart_cells_array[item_i+i][item_j].shape[0] for i in range(item_height)) - padding * (item_height - 1)
-			item_image_width = sum(cart_cells_array[item_i][item_j+j].shape[1] for j in range(item_width)) - padding * (item_width - 1)
-			item_image = Image.new(mode="RGBA", size=(item_image_width, item_image_height), color = (0, 0, 0, 0))
-			item_id = k + 1
-			image_save_path = os.path.join(save_path, f"item{item_id}.png").replace("\\", "/")
-			trimmed_image_save_path = os.path.join(save_path, f"item{item_id}-trimmed.png").replace("\\", "/")
-			# use cart_space as a mask over cart_cells_img
-			for i in range(cart_height):
-				for j in range(cart_width):
-					if cart_space[i,j] != item_id: continue
-					cell_i, cell_j = coords[i,j,:2]
-					top_left_i, top_left_j = cell_i - item_top_left_cell_i, cell_j - item_top_left_cell_j
-					Image.Image.paste(item_image, cart_cells_img[i][j], (top_left_j, top_left_i))
-			item_image.save(image_save_path)
+def extract_items_from_cart_image(cart_img_path, output_folder_path, trim=False):
+	cart_cells_img, cart_cells_array = cut_cart(cart_img_path, coords)
+	items_info, cart_space = scan_cart(cart_cells_array)
+	
+	os.makedirs(output_folder_path, exist_ok=True)
+	clear_folder(output_folder_path)
+	
+	for k in range(len(items_info)):
+		item_shape, item_i, item_j = items_info[k]
+		item_top_left_cell_i, item_top_left_cell_j = coords[item_i,item_j,:2]
+		item_height, item_width = len(item_shape), len(item_shape[0])
+		# we subtract some padding because the in between margins are overlapping on the final merged image
+		item_image_height = sum(cart_cells_array[item_i+i][item_j].shape[0] for i in range(item_height)) - padding * (item_height - 1)
+		item_image_width = sum(cart_cells_array[item_i][item_j+j].shape[1] for j in range(item_width)) - padding * (item_width - 1)
+		item_image = Image.new(mode="RGBA", size=(item_image_width, item_image_height), color = (0, 0, 0, 0))
+		item_id = k + 1
+		image_save_path = os.path.join(output_folder_path, f"{k}.png").replace("\\", "/")
+		trimmed_image_save_path = os.path.join(output_folder_path, f"{k}-trimmed.png").replace("\\", "/")
+		# use cart_space as a mask over cart_cells_img
+		for i in range(cart_height):
+			for j in range(cart_width):
+				if cart_space[i,j] != item_id: continue
+				cell_i, cell_j = coords[i,j,:2]
+				top_left_i, top_left_j = cell_i - item_top_left_cell_i, cell_j - item_top_left_cell_j
+				Image.Image.paste(item_image, cart_cells_img[i][j], (top_left_j, top_left_i))
+		item_image.save(image_save_path)
+		if trim:
 			for i in range(cart_height):
 				for j in range(cart_width):
 					if cart_space[i,j] == item_id: continue
@@ -362,6 +358,15 @@ def main():
 					Image.Image.paste(item_image, transparent_img, (top_left_j, top_left_i))
 			cropped_item_image = item_image.crop((padding, padding, item_image_width - padding, item_image_height - padding))
 			cropped_item_image.save(trimmed_image_save_path)
+	return items_info, cart_space
+
+def main():
+	folder_path = "assets/ss"
+	for file_path in os.listdir(folder_path):
+		if not file_path.endswith('.png'): continue
+		cart_img_path = os.path.join(folder_path, file_path)
+		output_folder_path = os.path.join(folder_path, f"{os.path.splitext(os.path.basename(file_path))[0]}-items").replace("\\", "/")
+		extract_items_from_cart_image(cart_img_path, output_folder_path)
 
 if __name__ == "__main__":
 	main()
