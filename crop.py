@@ -183,7 +183,7 @@ def scan_cart(cart_cells_array):
 	for i in range(cart_height):
 		for j in range(cart_width):
 			if is_attribute_stone(i, j):
-				items_shape.append([[1]])
+				items_shape.append(([[1]], i, j))
 				cart_space[i, j] = k
 				k += 1
 				break
@@ -221,7 +221,7 @@ def scan_cart(cart_cells_array):
 				max_j = max(max_j, j)
 
 	if found_vital_goods:
-		items_shape.append(vital_goods_shape[min_i:max_i+1,min_j:max_j+1])
+		items_shape.append((vital_goods_shape[min_i:max_i+1,min_j:max_j+1], min_i, min_j))
 		k += 1
 
 	def is_empty(i, j):
@@ -252,30 +252,30 @@ def scan_cart(cart_cells_array):
 			right = proportion_of_color_rgb(line, cart_background_color) <= 0.96
 		return top, bot, left, right
 
-	def explore_item(i, j, k, tmp, item_shape):
+	def explore_item(i, j, k, mins, item_shape):
 		# mark this cart space as seen as well as putting a unique id
 		cart_space[i, j] = k
 		item_shape[i, j] = 1
-		tmp[0] = min(tmp[0], i)
-		tmp[1] = max(tmp[1], i)
-		tmp[2] = min(tmp[2], j)
-		tmp[3] = max(tmp[3], j)
+		mins[0] = min(mins[0], i)
+		mins[1] = max(mins[1], i)
+		mins[2] = min(mins[2], j)
+		mins[3] = max(mins[3], j)
 		
 		top, bot, left, right = item_span_directions(cart_cells_array[i][j], i, j)
 
-		if top and cart_space[i-1, j] == 0: explore_item(i-1, j, k, tmp, item_shape)
-		if bot and cart_space[i+1, j] == 0: explore_item(i+1, j, k, tmp, item_shape)
-		if left and cart_space[i, j-1] == 0: explore_item(i, j-1, k, tmp, item_shape)
-		if right and cart_space[i, j+1] == 0: explore_item(i, j+1, k, tmp, item_shape)
+		if top and cart_space[i-1, j] == 0: explore_item(i-1, j, k, mins, item_shape)
+		if bot and cart_space[i+1, j] == 0: explore_item(i+1, j, k, mins, item_shape)
+		if left and cart_space[i, j-1] == 0: explore_item(i, j-1, k, mins, item_shape)
+		if right and cart_space[i, j+1] == 0: explore_item(i, j+1, k, mins, item_shape)
 
 	for i in range(cart_height):
 		for j in range(cart_width):
 			# already explored (attribute stone / vital goods / item) or empty
 			if cart_space[i, j] != 0 or is_empty(i, j): continue
-			tmp = [cart_height, -1, cart_width, -1]
+			mins = [cart_height, -1, cart_width, -1]
 			item_shape = np.full((cart_height, cart_width), 0)
-			explore_item(i, j, k, tmp, item_shape)
-			items_shape.append(item_shape[tmp[0]:tmp[1]+1,tmp[2]:tmp[3]+1])
+			explore_item(i, j, k, mins, item_shape)
+			items_shape.append((item_shape[mins[0]:mins[1]+1,mins[2]:mins[3]+1], mins[0], mins[2]))
 			k += 1
 
 	return items_shape, cart_space
@@ -327,19 +327,36 @@ def main():
 	cart_img_path = "emotes/ss/1.png"
 	cart_cells_img, cart_cells_array = cut_cart(cart_img_path, coords)
 	items_shape, cart_space = scan_cart(cart_cells_array)
+	for k in range(len(items_shape)):
+		item_shape, item_i, item_j = items_shape[k]
+		item_top_left_cell_i, item_top_left_cell_j = coords[item_i,item_j,:2]
+		item_height, item_width = len(item_shape), len(item_shape[0])
+		# we subtract some padding because the in between margins are overlapping on the final merged image
+		item_image_height = sum(cart_cells_array[item_i+i][item_j].shape[0] for i in range(item_height)) - padding * (item_height - 1)
+		item_image_width = sum(cart_cells_array[item_i][item_j+j].shape[1] for j in range(item_width)) - padding * (item_width - 1)
+		item_image = Image.new(mode="RGBA", size=(item_image_width, item_image_height), color = (0, 0, 0, 0))
+		item_id = k + 1
+		# use cart_space as a mask over cart_cells_img
+		for i in range(cart_height):
+			for j in range(cart_width):
+				if cart_space[i,j] != item_id: continue
+				cell_i, cell_j = coords[i,j,:2]
+				top_left_i, top_left_j = cell_i - item_top_left_cell_i, cell_j - item_top_left_cell_j
+				Image.Image.paste(item_image, cart_cells_img[i][j], (top_left_i, top_left_j))
+		item_image.save(f"emotes/ss/1-cropped/item{item_id}.png")		
 
 	# number of items found
-	n = len(items_shape)
-	for item_shape in items_shape:
-		print(item_shape, end="\n\n")
-	print(cart_space)
+	# n = len(items_shape)
+	# for item_shape in items_shape:
+	# 	print(item_shape, end="\n\n")
+	# print(cart_space)
 
-	save_path = "emotes/ss/1-cropped/"
-	os.makedirs(save_path, exist_ok=True)
-	clear_folder(save_path)
-	for i in range(cart_height):
-		for j in range(cart_width):
-			cart_cells_img[i][j].save(f"emotes/ss/1-cropped/{i}-{j}.png")
+	# save_path = "emotes/ss/1-cropped/"
+	# os.makedirs(save_path, exist_ok=True)
+	# clear_folder(save_path)
+	# for i in range(cart_height):
+	# 	for j in range(cart_width):
+	# 		cart_cells_img[i][j].save(f"emotes/ss/1-cropped/{i}-{j}.png")
 
 if __name__ == "__main__":
 	main()
