@@ -106,22 +106,22 @@ class Cart:
 				# Exorcism Ring i(Normal)
 				case 2:
 					for adj in adjs[k]:
-						if self.items[adj]["category"] == "Antique":
+						if self.items[adj].get("category", "") == "Antique":
 							self.added_value += 20
 				# Exorcism Ring (Rare)
 				case 3:
 					for adj in adjs[k]:
-						if self.items[adj]["category"] == "Antique":
+						if self.items[adj].get("category", "") == "Antique":
 							self.added_value += 30
 				# Gleaming Earrings (Normal)
 				case 4:
 					for adj in adjs[k]:
-						if self.items[adj]["rarity"] == "Rare Goods":
+						if self.items[adj].get("rarity", "") == "Rare Goods":
 							self.added_value += 20
 				# Gleaming Earrings (Rare)
 				case 5:
 					for adj in adjs[k]:
-						if self.items[adj]["rarity"] == "Rare Goods":
+						if self.items[adj].get("rarity", "") == "Rare Goods":
 							self.added_value += 60
 				# Ancient Holy Grail (Normal)
 				case 6:
@@ -136,12 +136,12 @@ class Cart:
 				# Radish (Normal)
 				case 28:
 					for adj in adjs[k]:
-						if self.items[adj]["category"] == "Food":
+						if self.items[adj].get("category", "") == "Food":
 							self.added_value += 30
 				# Radish (Rare)
 				case 29:
 					for adj in adjs[k]:
-						if self.items[adj]["category"] == "Food":
+						if self.items[adj].get("category", "") == "Food":
 							self.added_value += 45
 				# Demons Scythe (Normal)
 				case 54:
@@ -179,7 +179,7 @@ class CartSolver:
 		self.must_have_items_index = [i for i in available_items_index if "Non-discardable" in self.items[i].get("feature", "").split(",")]
 		self.compute_items_sizes()
 		self.compute_items_possible_positions()
-		self.compute_all_interesting_carts()
+		self.compute_interesting_carts()
 
 	def compute_items_sizes(self):
 		for item in self.items:
@@ -196,23 +196,34 @@ class CartSolver:
 	def try_put(self, item_index, position, space):
 		item = self.items[item_index]
 		shape = item["shape"]
+		item_size = item["size"]
+		checked = 0
 		i0, j0 = position
-		space_copy = [[space[i][j] for j in range(self.cart_width)] for i in range(self.cart_height)]
+		coords = []
+		
 		for i in range(item["height"]):
-			tmp = i0 + i
+			tmpi = i0 + i
 			for j in range(item["width"]):
-				if shape[i][j] == 0: continue
-				if space_copy[tmp][j0 + j] != -1: return None
-				space_copy[tmp][j0 + j] = item_index
+				tmpj = j0 + j
+				if space[tmpi][tmpj] != -1: return None
+				if shape[i][j] == 1:
+					coords.append((tmpi, tmpj))
+					checked += 1
+					if checked == item_size: break
+		
+		space_copy = [[space[i][j] for j in range(self.cart_width)] for i in range(self.cart_height)]
+		for i, j in coords: space_copy[i][j] = item_index
+		
 		return space_copy
 
 	# @profile
 	def _best_cart_with_effects(self, i, indices, positions, space):
 		if i == len(indices):
 			cart = Cart(self.config, [], [])
-			cart.items_index = [i for i in indices]
-			cart.items_position = [pos for pos in positions]
-			cart.space = [[space[i][j] for j in range(self.cart_width)] for i in range(self.cart_height)]
+			# shallow copies for now so that set_value can do its thing, will deepcopy if it turns out it's the best cart so far
+			cart.items_index = indices
+			cart.items_position = positions
+			cart.space = space
 			cart.set_value()
 			return cart
 		
@@ -222,17 +233,20 @@ class CartSolver:
 		best_cart = Cart(self.config, [], [])
 		best_cart.value = -1
 		for position in item["possible_positions"]:
-			new_space = self.try_put(item_index, position, space)
-			
-			if new_space == None: continue
+			space_copy = self.try_put(item_index, position, space)
+			if space_copy == None: continue
 			
 			positions[i] = position
-			cart = self._best_cart_with_effects(i + 1, indices, positions, new_space)
+			cart = self._best_cart_with_effects(i + 1, indices, positions, space_copy)
 			
 			if cart == None: continue
 			
 			if cart.value > best_cart.value:
 				best_cart = cart
+				# deep copies
+				best_cart.items_index = [i for i in indices]
+				best_cart.items_position = [pos for pos in positions]
+				best_cart.space = [[space_copy[i][j] for j in range(self.cart_width)] for i in range(self.cart_height)]
 		
 		return None if best_cart.value == -1 else best_cart
 
@@ -243,6 +257,7 @@ class CartSolver:
 	def _find_cart(self, i, indices, positions, space):
 		if i == len(indices):
 			cart = Cart(self.config, [], [])
+			# here we can straight up deep copy since the first cart found is guaranteed to be the best (no items with effect here)
 			cart.items_index = [i for i in indices]
 			cart.items_position = [pos for pos in positions]
 			cart.space = [[space[i][j] for j in range(self.cart_width)] for i in range(self.cart_height)]
@@ -253,12 +268,11 @@ class CartSolver:
 		item = self.items[item_index]
 		
 		for position in item["possible_positions"]:
-			new_space = self.try_put(item_index, position, space)
-			
-			if new_space == None: continue
+			space_copy = self.try_put(item_index, position, space)
+			if space_copy == None: continue
 			
 			positions[i] = position
-			cart = self._find_cart(i + 1, indices, positions, new_space)
+			cart = self._find_cart(i + 1, indices, positions, space_copy)
 			
 			if cart == None: continue
 			
@@ -270,7 +284,8 @@ class CartSolver:
 		return self._find_cart(0, indices, [(0, 0) for _ in indices], [[-1 for _ in range(self.cart_width)] for _ in range(self.cart_height)])
 
 	# @profile
-	def compute_all_interesting_carts(self):
+	def compute_interesting_carts(self):
+		# will try all combinaisons of N items that have a possible cart plus the ones with one item less (just in case idk) and stop there
 		self.all_interesting_carts = []
 		depth = 2
 		for n_items in range(len(self.available_items_index), 0, -1):
@@ -289,13 +304,10 @@ class CartSolver:
 
 				cart = self.best_cart_with_effects(indices) if with_effects else self.find_cart(indices)
 
-				if cart != None:
-					found = True
-					print(f"found new interesting cart with {indices}")
-					# print(cart, indices)
-					# for row in cart.space:
-					# 	print(" ".join(f"{num:2}" for num in row))
-					self.all_interesting_carts.append(cart)
+				if cart == None: continue
+				print(f"found new interesting cart with {indices = }")
+				found = True
+				self.all_interesting_carts.append(cart)
 			
 			if found:
 				depth -= 1
@@ -311,7 +323,7 @@ class CartSolver:
 
 	def solve(self):
 		for min_base_price in range(7000, -1, -10):
-			# print(f"trying with {min_base_price = }")
+			print(f"trying with {min_base_price = }")
 			r = self._solve(min_base_price)
 			if r.value != -1:
 				return r

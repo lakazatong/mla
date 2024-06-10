@@ -120,7 +120,7 @@ def proportion_of_color_rgb(img_array, rgb_target_color, threshold=0.1):
 
 cart_width = 7
 cart_height = 5
-padding = 3
+padding = 4
 
 def clear_folder(path):
 	for file in os.listdir(path):
@@ -140,7 +140,7 @@ def cut_cart(image_path, coords):
 	cart_cells_array = [[None for _ in range(cart_width)] for _ in range(cart_height)]
 	for i in range(cart_height):
 		for j in range(cart_width):
-			x, y, width, height = coords[i, j, :]
+			y, x, height, width = coords[i, j, :]
 			
 			x -= padding
 			y -= padding
@@ -281,82 +281,87 @@ def scan_cart(cart_cells_array):
 	return items_shape, cart_space
 
 coords = np.array([
-	(508, 263, 112, 111),
-	(623, 263, 111, 111),
-	(737, 263, 111, 111),
-	(851, 263, 111, 111),
-	(965, 263, 111, 111),
-	(1079, 263, 111, 111),
-	(1193, 263, 112, 111),
+	(271, 692, 149, 149),
+	(271, 845, 149, 148),
+	(271, 997, 149, 148),
+	(271, 1149, 149, 148),
+	(271, 1301, 149, 149),
+	(271, 1454, 149, 148),
+	(271, 1606, 149, 148),
 
-	(508, 377, 112, 111),
-	(623, 377, 111, 111),
-	(737, 377, 111, 111),
-	(851, 377, 111, 111),
-	(965, 377, 111, 111),
-	(1079, 377, 111, 111),
-	(1193, 377, 112, 111),
+	(424, 692, 148, 149),
+	(424, 845, 148, 148),
+	(424, 997, 148, 148),
+	(424, 1149, 148, 148),
+	(424, 1301, 148, 149),
+	(424, 1454, 148, 148),
+	(424, 1606, 148, 148),
 
-	(508, 491, 112, 111),
-	(623, 491, 111, 111),
-	(737, 491, 111, 111),
-	(851, 491, 111, 111),
-	(965, 491, 111, 111),
-	(1079, 491, 111, 111),
-	(1193, 491, 112, 111),
+	(576, 692, 148, 149),
+	(576, 845, 148, 148),
+	(576, 997, 148, 148),
+	(576, 1149, 148, 148),
+	(576, 1301, 148, 149),
+	(576, 1454, 148, 148),
+	(576, 1606, 148, 148),
 	
-	(508, 605, 112, 112),
-	(623, 605, 111, 112),
-	(737, 605, 111, 112),
-	(851, 605, 111, 112),
-	(965, 605, 111, 112),
-	(1079, 605, 111, 112),
-	(1193, 605, 112, 112),
+	(728, 692, 148, 149),
+	(728, 845, 148, 148),
+	(728, 997, 148, 148),
+	(728, 1149, 148, 148),
+	(728, 1301, 148, 149),
+	(728, 1454, 148, 148),
+	(728, 1606, 148, 148),
 	
-	(508, 720, 112, 111),
-	(623, 720, 111, 111),
-	(737, 720, 111, 111),
-	(851, 720, 111, 111),
-	(965, 720, 111, 111),
-	(1079, 720, 111, 111),
-	(1193, 720, 112, 111)
+	(880, 692, 149, 149),
+	(880, 845, 149, 148),
+	(880, 997, 149, 148),
+	(880, 1149, 149, 148),
+	(880, 1301, 149, 149),
+	(880, 1454, 149, 148),
+	(880, 1606, 149, 148)
 ]).reshape(cart_height, cart_width, 4)
 
-
 def main():
-	cart_img_path = "emotes/ss/1.png"
-	cart_cells_img, cart_cells_array = cut_cart(cart_img_path, coords)
-	items_shape, cart_space = scan_cart(cart_cells_array)
-	for k in range(len(items_shape)):
-		item_shape, item_i, item_j = items_shape[k]
-		item_top_left_cell_i, item_top_left_cell_j = coords[item_i,item_j,:2]
-		item_height, item_width = len(item_shape), len(item_shape[0])
-		# we subtract some padding because the in between margins are overlapping on the final merged image
-		item_image_height = sum(cart_cells_array[item_i+i][item_j].shape[0] for i in range(item_height)) - padding * (item_height - 1)
-		item_image_width = sum(cart_cells_array[item_i][item_j+j].shape[1] for j in range(item_width)) - padding * (item_width - 1)
-		item_image = Image.new(mode="RGBA", size=(item_image_width, item_image_height), color = (0, 0, 0, 0))
-		item_id = k + 1
-		# use cart_space as a mask over cart_cells_img
-		for i in range(cart_height):
-			for j in range(cart_width):
-				if cart_space[i,j] != item_id: continue
-				cell_i, cell_j = coords[i,j,:2]
-				top_left_i, top_left_j = cell_i - item_top_left_cell_i, cell_j - item_top_left_cell_j
-				Image.Image.paste(item_image, cart_cells_img[i][j], (top_left_i, top_left_j))
-		item_image.save(f"emotes/ss/1-cropped/item{item_id}.png")		
-
-	# number of items found
-	# n = len(items_shape)
-	# for item_shape in items_shape:
-	# 	print(item_shape, end="\n\n")
-	# print(cart_space)
-
-	# save_path = "emotes/ss/1-cropped/"
-	# os.makedirs(save_path, exist_ok=True)
-	# clear_folder(save_path)
-	# for i in range(cart_height):
-	# 	for j in range(cart_width):
-	# 		cart_cells_img[i][j].save(f"emotes/ss/1-cropped/{i}-{j}.png")
+	folder_path = "emotes/ss"
+	for file_path in os.listdir(folder_path):
+		if not file_path.endswith('.png'): continue
+		cart_img_path = os.path.join(folder_path, file_path)
+		cart_cells_img, cart_cells_array = cut_cart(cart_img_path, coords)
+		items_shape, cart_space = scan_cart(cart_cells_array)
+		
+		save_path = os.path.join(folder_path, f"{os.path.splitext(os.path.basename(file_path))[0]}-cropped").replace("\\", "/")
+		os.makedirs(save_path, exist_ok=True)
+		clear_folder(save_path)
+		
+		for k in range(len(items_shape)):
+			item_shape, item_i, item_j = items_shape[k]
+			item_top_left_cell_i, item_top_left_cell_j = coords[item_i,item_j,:2]
+			item_height, item_width = len(item_shape), len(item_shape[0])
+			# we subtract some padding because the in between margins are overlapping on the final merged image
+			item_image_height = sum(cart_cells_array[item_i+i][item_j].shape[0] for i in range(item_height)) - padding * (item_height - 1)
+			item_image_width = sum(cart_cells_array[item_i][item_j+j].shape[1] for j in range(item_width)) - padding * (item_width - 1)
+			item_image = Image.new(mode="RGBA", size=(item_image_width, item_image_height), color = (0, 0, 0, 0))
+			item_id = k + 1
+			image_save_path = os.path.join(save_path, f"item{item_id}.png").replace("\\", "/")
+			trimmed_image_save_path = os.path.join(save_path, f"item{item_id}-trimmed.png").replace("\\", "/")
+			# use cart_space as a mask over cart_cells_img
+			for i in range(cart_height):
+				for j in range(cart_width):
+					if cart_space[i,j] != item_id: continue
+					cell_i, cell_j = coords[i,j,:2]
+					top_left_i, top_left_j = cell_i - item_top_left_cell_i, cell_j - item_top_left_cell_j
+					Image.Image.paste(item_image, cart_cells_img[i][j], (top_left_j, top_left_i))
+			item_image.save(image_save_path)
+			for i in range(cart_height):
+				for j in range(cart_width):
+					if cart_space[i,j] == item_id: continue
+					cell_i, cell_j = coords[i,j,:2]
+					top_left_i, top_left_j = cell_i - item_top_left_cell_i, cell_j - item_top_left_cell_j
+					transparent_img = Image.new('RGBA', cart_cells_img[i][j].size, (0, 0, 0, 0))
+					Image.Image.paste(item_image, transparent_img, (top_left_j, top_left_i))
+			cropped_item_image = item_image.crop((padding, padding, item_image_width - padding, item_image_height - padding))
+			cropped_item_image.save(trimmed_image_save_path)
 
 if __name__ == "__main__":
 	main()
