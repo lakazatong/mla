@@ -11,6 +11,13 @@
 	"items": [
 
 		{
+			"name": "Dummy",
+			"category": "Dummy",
+			"value": 0,
+			"shape": [[0]]
+		},
+
+		{
 			"name": "Attribute Stone",
 			"category": "Lv.X",
 			"value": 0,

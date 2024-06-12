@@ -189,8 +189,7 @@ def scan_cart(cart_cells_array):
 				break
 
 	if k == 1:
-		print("no Attribute stone? sus")
-		exit(1)
+		raise Exception("No Attribute Stone")
 	
 	def is_vital_good(i, j):
 		img_array = cart_cells_array[i][j]
@@ -323,9 +322,17 @@ coords = np.array([
 ]).reshape(cart_height, cart_width, 4)
 
 def extract_items_from_cart_image(cart_img_path, output_folder_path, trim=False):
-	cart_cells_img, cart_cells_array = cut_cart(cart_img_path, coords)
-	items_info, cart_space = scan_cart(cart_cells_array)
-	
+	cart_cells_img, cart_cells_array = None, None
+	items_info, cart_space = None, None
+	try:
+		cart_cells_img, cart_cells_array = cut_cart(cart_img_path, coords)
+		items_info, cart_space = scan_cart(cart_cells_array)
+	except:
+		# screenshot may have been taken after a chest has been collected, in this case the cart is lower
+		coords[:,:,0] += 79
+		cart_cells_img, cart_cells_array = cut_cart(cart_img_path, coords)
+		items_info, cart_space = scan_cart(cart_cells_array)
+
 	os.makedirs(output_folder_path, exist_ok=True)
 	clear_folder(output_folder_path)
 	
