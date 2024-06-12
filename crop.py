@@ -120,7 +120,19 @@ def proportion_of_color_rgb(img_array, rgb_target_color, threshold=0.1):
 
 cart_width = 7
 cart_height = 5
-padding = 4
+cart_padding = 4
+
+attribute_stone_storage_height = 3
+attribute_stone_storage_width = 3
+attribute_stone_storage_padding = 4
+
+cart_background_color = (49, 36, 24)
+attribute_stone_storage_background_color = (51, 14, 60)
+empty_color = (33, 24, 16)
+attribute_stone_color = (165, 81, 165)
+vital_goods_color = (82, 166, 165)
+bottom_shade_color = (21, 41, 70)
+bottom_shade_coord = (1099, 157, 341, 3126)
 
 def clear_folder(path):
 	for file in os.listdir(path):
@@ -133,73 +145,114 @@ def get_average_color(image):
 	w, h, d = np_image.shape
 	return tuple(np_image.reshape(w * h, d).mean(axis=0).astype(int))
 
-def cut_cart(image_path, coords):
-	image = Image.open(image_path)
-	# crop the image in cart cells
-	cart_cells_img = [[None for _ in range(cart_width)] for _ in range(cart_height)]
-	cart_cells_array = [[None for _ in range(cart_width)] for _ in range(cart_height)]
-	for i in range(cart_height):
-		for j in range(cart_width):
-			y, x, height, width = coords[i, j, :]
+def cut_items(image, coords, padding):
+	# crop the cells in image according to coords
+	height, width, _ = coords.shape
+	cart_cells_img = [[None for _ in range(width)] for _ in range(height)]
+	cart_cells_array = [[None for _ in range(width)] for _ in range(height)]
+	for i in range(height):
+		for j in range(width):
+			y, x, cell_height, cell_width = coords[i, j, :]
 			
 			x -= padding
 			y -= padding
-			width += padding * 2
-			height += padding * 2
+			cell_width += padding * 2
+			cell_height += padding * 2
 			
-			cropped_image = image.crop((x, y, x + width, y + height))
+			cropped_image = image.crop((x, y, x + cell_width, y + cell_height))
 			cart_cells_img[i][j] = cropped_image
 			cart_cells_array[i][j] = np.array(cropped_image)
 	return cart_cells_img, cart_cells_array
 
-def scan_cart(cart_cells_array):
-	cart_background_color = (49, 36, 24)
-	empty_color = (33, 24, 16)
-	attribute_stone_color = (165, 81, 165)
-	vital_goods_color = (82, 166, 165)
+def is_empty(img_array, padding):
+	height, width = img_array.shape[:1+1]
+	horizontal_length, vertical_length = width - padding * 2, height - padding * 2
+	return (
+			proportion_of_color_rgb(img_array[padding,padding:width-padding,:].reshape(1, horizontal_length, 3), empty_color) >= 0.5
+		and proportion_of_color_rgb(img_array[height-padding-1,padding:width-padding,:].reshape(1, horizontal_length, 3), empty_color) >= 0.5
+		and proportion_of_color_rgb(img_array[padding:height-padding,padding,:].reshape(1, vertical_length, 3),  empty_color) >= 0.5
+		and proportion_of_color_rgb(img_array[padding:height-padding,width-padding-1,:].reshape(1, vertical_length, 3), empty_color) >= 0.5
+	)
+
+def item_span_directions(image_array, i, j, background_color):
+	height, width, _ = image_array.shape
+	top, bot, left, right = False, False, False, False
+	if i > 0:
+		line = image_array[1,:,:].reshape(1, width, 3)
+		top = proportion_of_color_rgb(line, background_color) <= 0.96
+	if i < cart_height - 1:
+		line = image_array[height - 2,:,:].reshape(1, width, 3)
+		bot = proportion_of_color_rgb(line, background_color) <= 0.96
+	if j > 0:
+		line = image_array[:,1,:].reshape(1, height, 3)
+		left = proportion_of_color_rgb(line, background_color) <= 0.96
+	if j < cart_width - 1:
+		line = image_array[:,width - 2,:].reshape(1, height, 3)
+		right = proportion_of_color_rgb(line, background_color) <= 0.96
+	return top, bot, left, right
+
+def explore_item(i, j, item_id, mins, item_shape, cells_array, space, background_color):
+	def _explore_item(i, j):
+		# mark this cart space as seen as well as putting a unique id
+		space[i, j] = item_id
+		item_shape[i, j] = 1
+		mins[0] = min(mins[0], i)
+		mins[1] = max(mins[1], i)
+		mins[2] = min(mins[2], j)
+		mins[3] = max(mins[3], j)
+		
+		top, bot, left, right = item_span_directions(cells_array[i][j], i, j, background_color)
+
+		if top and space[i-1, j] == 0: _explore_item(i-1, j)
+		if bot and space[i+1, j] == 0: _explore_item(i+1, j)
+		if left and space[i, j-1] == 0: _explore_item(i, j-1)
+		if right and space[i, j+1] == 0: _explore_item(i, j+1)
+	_explore_item(i, j)
+
+def scan_cart(cells_array, start_item_id=1):
 	
-	cart_space = np.full((cart_height, cart_width), 0)
+	space = np.full((cart_height, cart_width), 0)
 	items_info = []
 
 	def is_attribute_stone(i, j):
-		img_array = cart_cells_array[i][j]
+		img_array = cells_array[i][j]
 		height, width = img_array.shape[:1+1]
-		horizontal_length, vertical_length = width - padding * 2, height - padding * 2
+		horizontal_length, vertical_length = width - cart_padding * 2, height - cart_padding * 2
 		# top = proportion_of_color_rgb(img_array[padding,padding:width-padding,:].reshape(1, horizontal_length, 3), attribute_stone_color)
 		# bot = proportion_of_color_rgb(img_array[height-padding-1,padding:width-padding,:].reshape(1, horizontal_length, 3), attribute_stone_color)
 		# left = proportion_of_color_rgb(img_array[padding:height-padding,padding,:].reshape(1, vertical_length, 3),  attribute_stone_color)
 		# right = proportion_of_color_rgb(img_array[padding:height-padding,width-padding-1,:].reshape(1, vertical_length, 3), attribute_stone_color)
 		# print(top, bot, left, right)
 		return (
-				proportion_of_color_rgb(img_array[padding,padding:width-padding,:].reshape(1, horizontal_length, 3), attribute_stone_color) >= 0.5
-			and proportion_of_color_rgb(img_array[height-padding-1,padding:width-padding,:].reshape(1, horizontal_length, 3), attribute_stone_color) >= 0.5
-			and proportion_of_color_rgb(img_array[padding:height-padding,padding,:].reshape(1, vertical_length, 3),  attribute_stone_color) >= 0.5
-			and proportion_of_color_rgb(img_array[padding:height-padding,width-padding-1,:].reshape(1, vertical_length, 3), attribute_stone_color) >= 0.5
+				proportion_of_color_rgb(img_array[cart_padding,cart_padding:width-cart_padding,:].reshape(1, horizontal_length, 3), attribute_stone_color) >= 0.5
+			and proportion_of_color_rgb(img_array[height-cart_padding-1,cart_padding:width-cart_padding,:].reshape(1, horizontal_length, 3), attribute_stone_color) >= 0.5
+			and proportion_of_color_rgb(img_array[cart_padding:height-cart_padding,cart_padding,:].reshape(1, vertical_length, 3),  attribute_stone_color) >= 0.5
+			and proportion_of_color_rgb(img_array[cart_padding:height-cart_padding,width-cart_padding-1,:].reshape(1, vertical_length, 3), attribute_stone_color) >= 0.5
 		)
 
-	k = 1
+	item_id = start_item_id
 
 	# first find the Attribute Stone because it spills on the edges, making item_span_directions return a false positive
 	for i in range(cart_height):
 		for j in range(cart_width):
 			if is_attribute_stone(i, j):
 				items_info.append(([[1]], i, j))
-				cart_space[i, j] = k
-				k += 1
+				space[i, j] = item_id
+				item_id += 1
 				break
 
-	if k == 1:
+	if item_id == 1:
 		raise Exception("No Attribute Stone")
 	
 	def is_vital_good(i, j):
-		img_array = cart_cells_array[i][j]
+		img_array = cells_array[i][j]
 		height, width = img_array.shape[:1+1]
-		horizontal_length, vertical_length = width - padding * 2, height - padding * 2
+		horizontal_length, vertical_length = width - cart_padding * 2, height - cart_padding * 2
 		return (
-				proportion_of_color_rgb(img_array[padding,padding:width-padding,:].reshape(1, horizontal_length, 3), vital_goods_color) >= 0.5
-			and proportion_of_color_rgb(img_array[height-padding-1,padding:width-padding,:].reshape(1, horizontal_length, 3), vital_goods_color) >= 0.5
-			and proportion_of_color_rgb(img_array[padding:height-padding,padding,:].reshape(1, vertical_length, 3),  vital_goods_color) >= 0.5
-			and proportion_of_color_rgb(img_array[padding:height-padding,width-padding-1,:].reshape(1, vertical_length, 3), vital_goods_color) >= 0.5
+				proportion_of_color_rgb(img_array[cart_padding,cart_padding:width-cart_padding,:].reshape(1, horizontal_length, 3), vital_goods_color) >= 0.5
+			and proportion_of_color_rgb(img_array[height-cart_padding-1,cart_padding:width-cart_padding,:].reshape(1, horizontal_length, 3), vital_goods_color) >= 0.5
+			and proportion_of_color_rgb(img_array[cart_padding:height-cart_padding,cart_padding,:].reshape(1, vertical_length, 3),  vital_goods_color) >= 0.5
+			and proportion_of_color_rgb(img_array[cart_padding:height-cart_padding,width-cart_padding-1,:].reshape(1, vertical_length, 3), vital_goods_color) >= 0.5
 		)
 
 	found_vital_goods = False
@@ -210,7 +263,7 @@ def scan_cart(cart_cells_array):
 		for j in range(cart_width):
 			if is_vital_good(i, j):
 				# print(f"vital goods at {i}, {j}")
-				cart_space[i, j] = k
+				space[i, j] = item_id
 				vital_goods_shape[i,j] = 1
 				
 				found_vital_goods = True
@@ -221,65 +274,41 @@ def scan_cart(cart_cells_array):
 
 	if found_vital_goods:
 		items_info.append((vital_goods_shape[min_i:max_i+1,min_j:max_j+1], min_i, min_j))
-		k += 1
-
-	def is_empty(i, j):
-		img_array = cart_cells_array[i][j]
-		height, width = img_array.shape[:1+1]
-		horizontal_length, vertical_length = width - padding * 2, height - padding * 2
-		return (
-				proportion_of_color_rgb(img_array[padding,padding:width-padding,:].reshape(1, horizontal_length, 3), empty_color) >= 0.5
-			and proportion_of_color_rgb(img_array[height-padding-1,padding:width-padding,:].reshape(1, horizontal_length, 3), empty_color) >= 0.5
-			and proportion_of_color_rgb(img_array[padding:height-padding,padding,:].reshape(1, vertical_length, 3),  empty_color) >= 0.5
-			and proportion_of_color_rgb(img_array[padding:height-padding,width-padding-1,:].reshape(1, vertical_length, 3), empty_color) >= 0.5
-		)
-
-	def item_span_directions(cropped_image_array, i, j):
-		height, width = cropped_image_array.shape[:1+1]
-		top, bot, left, right = False, False, False, False
-		if i > 0:
-			line = cropped_image_array[1,:,:].reshape(1, width, 3)
-			top = proportion_of_color_rgb(line, cart_background_color) <= 0.96
-		if i < cart_height - 1:
-			line = cropped_image_array[height - 2,:,:].reshape(1, width, 3)
-			bot = proportion_of_color_rgb(line, cart_background_color) <= 0.96
-		if j > 0:
-			line = cropped_image_array[:,1,:].reshape(1, height, 3)
-			left = proportion_of_color_rgb(line, cart_background_color) <= 0.96
-		if j < cart_width - 1:
-			line = cropped_image_array[:,width - 2,:].reshape(1, height, 3)
-			right = proportion_of_color_rgb(line, cart_background_color) <= 0.96
-		return top, bot, left, right
-
-	def explore_item(i, j, k, mins, item_shape):
-		# mark this cart space as seen as well as putting a unique id
-		cart_space[i, j] = k
-		item_shape[i, j] = 1
-		mins[0] = min(mins[0], i)
-		mins[1] = max(mins[1], i)
-		mins[2] = min(mins[2], j)
-		mins[3] = max(mins[3], j)
-		
-		top, bot, left, right = item_span_directions(cart_cells_array[i][j], i, j)
-
-		if top and cart_space[i-1, j] == 0: explore_item(i-1, j, k, mins, item_shape)
-		if bot and cart_space[i+1, j] == 0: explore_item(i+1, j, k, mins, item_shape)
-		if left and cart_space[i, j-1] == 0: explore_item(i, j-1, k, mins, item_shape)
-		if right and cart_space[i, j+1] == 0: explore_item(i, j+1, k, mins, item_shape)
+		item_id += 1
 
 	for i in range(cart_height):
 		for j in range(cart_width):
 			# already explored (attribute stone / vital goods / item) or empty
-			if cart_space[i, j] != 0 or is_empty(i, j): continue
+			if space[i, j] != 0 or is_empty(cells_array[i][j], cart_padding): continue
 			mins = [cart_height, -1, cart_width, -1]
 			item_shape = np.full((cart_height, cart_width), 0)
-			explore_item(i, j, k, mins, item_shape)
+			explore_item(i, j, item_id, mins, item_shape, cells_array, space, cart_background_color)
 			items_info.append((item_shape[mins[0]:mins[1]+1,mins[2]:mins[3]+1], mins[0], mins[2]))
-			k += 1
+			item_id += 1
 
-	return items_info, cart_space
+	return items_info, space
 
-coords = np.array([
+def scan_attribute_stone_storage(cells_array, start_item_id):
+
+	space = np.full((attribute_stone_storage_height, attribute_stone_storage_width), 0)
+	items_info = []
+
+	item_id = start_item_id
+
+	for i in range(attribute_stone_storage_height):
+		for j in range(attribute_stone_storage_width):
+			# already explored (attribute stone / vital goods / item) or empty
+			if space[i, j] != 0 or is_empty(cells_array[i][j], attribute_stone_storage_padding): continue
+			mins = [attribute_stone_storage_height, -1, attribute_stone_storage_width, -1]
+			item_shape = np.full((attribute_stone_storage_height, attribute_stone_storage_width), 0)
+			explore_item(i, j, item_id, mins, item_shape, cells_array, space, attribute_stone_storage_background_color)
+			items_info.append((item_shape[mins[0]:mins[1]+1,mins[2]:mins[3]+1], mins[0], mins[2]))
+			item_id += 1
+
+	return items_info, space
+
+
+cart_coords = np.array([
 	(271, 692, 149, 149),
 	(271, 845, 149, 148),
 	(271, 997, 149, 148),
@@ -321,51 +350,76 @@ coords = np.array([
 	(880, 1606, 149, 148)
 ]).reshape(cart_height, cart_width, 4)
 
-def extract_items_from_cart_image(cart_img_path, output_folder_path, trim=False):
-	cart_cells_img, cart_cells_array = None, None
-	items_info, cart_space = None, None
-	try:
-		cart_cells_img, cart_cells_array = cut_cart(cart_img_path, coords)
-		items_info, cart_space = scan_cart(cart_cells_array)
-	except:
-		# screenshot may have been taken after a chest has been collected, in this case the cart is lower
-		coords[:,:,0] += 79
-		cart_cells_img, cart_cells_array = cut_cart(cart_img_path, coords)
-		items_info, cart_space = scan_cart(cart_cells_array)
+attribute_stone_storage_coords = np.array([
+	(295, 2263, 149, 148),
+	(295, 2415, 149, 148),
+	(295, 2567, 149, 149),
 
-	os.makedirs(output_folder_path, exist_ok=True)
-	clear_folder(output_folder_path)
+	(448, 2263, 148, 148),
+	(448, 2415, 148, 148),
+	(448, 2567, 148, 149),
 	
+	(600, 2263, 148, 148),
+	(600, 2415, 148, 148),
+	(600, 2567, 148, 149)
+]).reshape(attribute_stone_storage_height, attribute_stone_storage_width, 4)
+
+def _extract_items_from_cart_screenshot(cells_img, cells_array, padding, items_info, space, output_folder_path, trim, start_item_id):
+	cells_height, cells_width = space.shape
+	item_id = start_item_id
 	for k in range(len(items_info)):
 		item_shape, item_i, item_j = items_info[k]
-		item_top_left_cell_i, item_top_left_cell_j = coords[item_i,item_j,:2]
+		item_top_left_cell_i, item_top_left_cell_j = cart_coords[item_i,item_j,:2]
 		item_height, item_width = len(item_shape), len(item_shape[0])
 		# we subtract some padding because the in between margins are overlapping on the final merged image
-		item_image_height = sum(cart_cells_array[item_i+i][item_j].shape[0] for i in range(item_height)) - padding * (item_height - 1)
-		item_image_width = sum(cart_cells_array[item_i][item_j+j].shape[1] for j in range(item_width)) - padding * (item_width - 1)
+		item_image_height = sum(cells_array[item_i+i][item_j].shape[0] for i in range(item_height)) - padding * (item_height - 1)
+		item_image_width = sum(cells_array[item_i][item_j+j].shape[1] for j in range(item_width)) - padding * (item_width - 1)
 		item_image = Image.new(mode="RGBA", size=(item_image_width, item_image_height), color = (0, 0, 0, 0))
-		item_id = k + 1
-		image_save_path = os.path.join(output_folder_path, f"{k}.png").replace("\\", "/")
-		trimmed_image_save_path = os.path.join(output_folder_path, f"{k}-trimmed.png").replace("\\", "/")
-		# use cart_space as a mask over cart_cells_img
-		for i in range(cart_height):
-			for j in range(cart_width):
-				if cart_space[i,j] != item_id: continue
-				cell_i, cell_j = coords[i,j,:2]
+		image_save_path = os.path.join(output_folder_path, f"{item_id}.png").replace("\\", "/")
+		trimmed_image_save_path = os.path.join(output_folder_path, f"{item_id}-trimmed.png").replace("\\", "/")
+		# use space as a mask over cells_img
+		for i in range(cells_height):
+			for j in range(cells_width):
+				if space[i,j] != item_id: continue
+				cell_i, cell_j = cart_coords[i,j,:2]
 				top_left_i, top_left_j = cell_i - item_top_left_cell_i, cell_j - item_top_left_cell_j
-				Image.Image.paste(item_image, cart_cells_img[i][j], (top_left_j, top_left_i))
+				Image.Image.paste(item_image, cells_img[i][j], (top_left_j, top_left_i))
 		item_image.save(image_save_path)
 		if trim:
-			for i in range(cart_height):
-				for j in range(cart_width):
-					if cart_space[i,j] == item_id: continue
-					cell_i, cell_j = coords[i,j,:2]
+			for i in range(cells_height):
+				for j in range(cells_width):
+					if space[i,j] == item_id: continue
+					cell_i, cell_j = cart_coords[i,j,:2]
 					top_left_i, top_left_j = cell_i - item_top_left_cell_i, cell_j - item_top_left_cell_j
 					transparent_img = Image.new('RGBA', cart_cells_img[i][j].size, (0, 0, 0, 0))
 					Image.Image.paste(item_image, transparent_img, (top_left_j, top_left_i))
 			cropped_item_image = item_image.crop((padding, padding, item_image_width - padding, item_image_height - padding))
 			cropped_item_image.save(trimmed_image_save_path)
-	return items_info, cart_space
+		item_id += 1
+
+def extract_items_from_cart_screenshot(screenshot_img_path, output_folder_path, trim=False):
+	screenshot_image = Image.open(screenshot_img_path)
+	screenshot_image_array = np.array(screenshot_image)
+	screenshot_image_array_height, screenshot_image_array_width, _ = screenshot_image_array.shape
+	
+	if proportion_of_color_rgb(screenshot_image_array[bottom_shade_coord[0]:,bottom_shade_coord[1]:screenshot_image_array_width-bottom_shade_coord[3],:], bottom_shade_color) < 0.5:
+		# screenshot may have been taken after a chest has been collected, in this case the cart and attribute stone storage is lower
+		cart_coords[:,:,0] += 79
+		attribute_stone_storage_coords[0,:,0] += 150
+		attribute_stone_storage_coords[1:,:,0] += 149
+		attribute_stone_storage_coords[0,:,2] -= 1
+	
+	cart_cells_img, cart_cells_array = cut_items(screenshot_image, cart_coords, cart_padding)
+	cart_items_info, cart_space = scan_cart(cart_cells_array)
+	attribute_stone_storage_cells_img, attribute_stone_storage_cells_array = cut_items(screenshot_image, attribute_stone_storage_coords, attribute_stone_storage_padding)
+	attribute_stone_storage_items_info, attribute_stone_storage_space = scan_attribute_stone_storage(attribute_stone_storage_cells_array, start_item_id=len(cart_items_info)+1)
+
+	os.makedirs(output_folder_path, exist_ok=True)
+	clear_folder(output_folder_path)
+
+	_extract_items_from_cart_screenshot(cart_cells_img, cart_cells_array, cart_padding, cart_items_info, cart_space, output_folder_path, trim, 1)
+	_extract_items_from_cart_screenshot(attribute_stone_storage_cells_img, attribute_stone_storage_cells_array, attribute_stone_storage_padding, attribute_stone_storage_items_info, attribute_stone_storage_space, output_folder_path, trim, len(cart_items_info)+1)
+	return cart_items_info, cart_space, attribute_stone_storage_items_info, attribute_stone_storage_space
 
 def main():
 	folder_path = "assets/ss"
@@ -373,7 +427,7 @@ def main():
 		if not file_path.endswith('.png'): continue
 		cart_img_path = os.path.join(folder_path, file_path)
 		output_folder_path = os.path.join(folder_path, f"{os.path.splitext(os.path.basename(file_path))[0]}-items").replace("\\", "/")
-		extract_items_from_cart_image(cart_img_path, output_folder_path)
+		extract_items_from_cart_screenshot(cart_img_path, output_folder_path)
 
 if __name__ == "__main__":
 	main()
