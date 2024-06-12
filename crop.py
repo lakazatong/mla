@@ -307,7 +307,6 @@ def scan_attribute_stone_storage(cells_array, start_item_id):
 
 	return items_info, space
 
-
 cart_coords = np.array([
 	(271, 692, 149, 149),
 	(271, 845, 149, 148),

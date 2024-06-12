@@ -33,9 +33,6 @@ def find_most_similar_item_filename(item_image_as_array, item_height, item_width
 	
 	return most_similar_item_filename
 
-
-
-
 def cart_from_image(screenshot_img_path):
 	tmp_save_path = "assets/tmp"
 	cart_items_info, cart_space, attribute_stone_storage_items_info, attribute_stone_storage_space = extract_items_from_cart_screenshot(screenshot_img_path, tmp_save_path)
