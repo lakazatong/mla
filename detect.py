@@ -75,7 +75,7 @@ def main():
 	items = config["items"]
 	# print("\n".join([f"{i}: {item}" for i, item in enumerate(items) if len(item["shape"]) == 1 and len(item["shape"][0]) == 1 and item.get("rarity", "") == "Rare Goods"]))
 	print(f"current progress = {round(count_files_in_folder(items_folder_path) / len(items) * 100, 0)}%")
-	cart_items_info, cart_space, attribute_stone_storage_items_info, attribute_stone_storage_space = cart_from_image("assets/ss/5.png")
+	cart_items_info, cart_space, attribute_stone_storage_items_info, attribute_stone_storage_space = cart_from_image("assets/ss/4.png")
 	for item_info in cart_items_info:
 		print(item_info)
 	for item_info in attribute_stone_storage_items_info:

@@ -127,12 +127,30 @@ attribute_stone_storage_width = 3
 attribute_stone_storage_padding = 4
 
 cart_background_color = (49, 36, 24)
-attribute_stone_storage_background_color = (51, 14, 60)
-empty_color = (33, 24, 16)
-attribute_stone_color = (165, 81, 165)
-vital_goods_color = (82, 166, 165)
+attribute_stone_storage_background_color = (56, 16, 65)
+
+average_empty_color_top = (33, 24, 16)
+average_empty_color_bot = (41, 28, 16)
+average_empty_color_left = (33, 28, 16)
+average_empty_color_right = (40, 28, 16)
+
+average_attribute_stone_color_top = (188, 90, 184)
+average_attribute_stone_color_bot = (164, 82, 162)
+average_attribute_stone_color_left = (168, 91, 174)
+average_attribute_stone_color_right = (157, 79, 160)
+
+average_vital_goods_color_top = (82, 166, 167)
+average_vital_goods_color_bot = (82, 166, 167)
+average_vital_goods_color_left = (82, 165, 166)
+average_vital_goods_color_right = (82, 165, 166)
+
 bottom_shade_color = (21, 41, 70)
 bottom_shade_coord = (1099, 157, 341, 3126)
+
+# 0.5 because at most 2 edge can be illuminated by the "full cart" glow and thus brightening the color
+# but still way above what any other item could do so it's safe
+# if anything we could use 0.5 only for the edges close to the edges of the cart, but that's overkill
+item_edges_color_proportion_sum_threshold = 0.5 + 0.5 + 0.9 + 0.9
 
 def clear_folder(path):
 	for file in os.listdir(path):
@@ -168,15 +186,18 @@ def is_empty(img_array, padding):
 	height, width = img_array.shape[:1+1]
 	horizontal_length, vertical_length = width - padding * 2, height - padding * 2
 	return (
-			proportion_of_color_rgb(img_array[padding,padding:width-padding,:].reshape(1, horizontal_length, 3), empty_color) >= 0.5
-		and proportion_of_color_rgb(img_array[height-padding-1,padding:width-padding,:].reshape(1, horizontal_length, 3), empty_color) >= 0.5
-		and proportion_of_color_rgb(img_array[padding:height-padding,padding,:].reshape(1, vertical_length, 3),  empty_color) >= 0.5
-		and proportion_of_color_rgb(img_array[padding:height-padding,width-padding-1,:].reshape(1, vertical_length, 3), empty_color) >= 0.5
+		(proportion_of_color_rgb(img_array[padding,padding:width-padding,:].reshape(1, horizontal_length, 3), average_empty_color_top)
+		+ proportion_of_color_rgb(img_array[height-padding-1,padding:width-padding,:].reshape(1, horizontal_length, 3), average_empty_color_bot)
+		+ proportion_of_color_rgb(img_array[padding:height-padding,padding,:].reshape(1, vertical_length, 3),  average_empty_color_left)
+		+ proportion_of_color_rgb(img_array[padding:height-padding,width-padding-1,:].reshape(1, vertical_length, 3), average_empty_color_right))
+		>= item_edges_color_proportion_sum_threshold
 	)
 
 def item_span_directions(image_array, i, j, background_color):
 	height, width, _ = image_array.shape
 	top, bot, left, right = False, False, False, False
+	# here the 0.96 thresholds do not have to take into account the glow of the full cart effect since this function is not called
+	# for the faces facing to the exterior of the cart, items can't extend outside of the cart's space
 	if i > 0:
 		line = image_array[1,:,:].reshape(1, width, 3)
 		top = proportion_of_color_rgb(line, background_color) <= 0.96
@@ -209,28 +230,41 @@ def explore_item(i, j, item_id, mins, item_shape, cells_array, space, background
 		if right and space[i, j+1] == 0: _explore_item(i, j+1)
 	_explore_item(i, j)
 
-def scan_cart(cells_array, start_item_id=1):
+def scan_cart(cells_array):
 	
 	space = np.full((cart_height, cart_width), 0)
 	items_info = []
 
+	# tmp = []
+	# max_img = None
+	# max_score = 0
+
 	def is_attribute_stone(i, j):
+		# nonlocal max_img, max_score
+		
 		img_array = cells_array[i][j]
 		height, width = img_array.shape[:1+1]
 		horizontal_length, vertical_length = width - cart_padding * 2, height - cart_padding * 2
-		# top = proportion_of_color_rgb(img_array[padding,padding:width-padding,:].reshape(1, horizontal_length, 3), attribute_stone_color)
-		# bot = proportion_of_color_rgb(img_array[height-padding-1,padding:width-padding,:].reshape(1, horizontal_length, 3), attribute_stone_color)
-		# left = proportion_of_color_rgb(img_array[padding:height-padding,padding,:].reshape(1, vertical_length, 3),  attribute_stone_color)
-		# right = proportion_of_color_rgb(img_array[padding:height-padding,width-padding-1,:].reshape(1, vertical_length, 3), attribute_stone_color)
-		# print(top, bot, left, right)
+		
+		# top = proportion_of_color_rgb(img_array[cart_padding,cart_padding:width-cart_padding,:].reshape(1, horizontal_length, 3), average_attribute_stone_color_top)
+		# bot = proportion_of_color_rgb(img_array[height-cart_padding-1,cart_padding:width-cart_padding,:].reshape(1, horizontal_length, 3), average_attribute_stone_color_bot)
+		# left = proportion_of_color_rgb(img_array[cart_padding:height-cart_padding,cart_padding,:].reshape(1, vertical_length, 3),  average_attribute_stone_color_left)
+		# right = proportion_of_color_rgb(img_array[cart_padding:height-cart_padding,width-cart_padding-1,:].reshape(1, vertical_length, 3), average_attribute_stone_color_right)
+		# tmp.append((i, j, round(top, 1), round(bot, 1), round(left, 1), round(right, 1)))
+		# score = top + bot + left + right
+		# if score > max_score:
+		# 	max_score = top + bot + left + right
+		# 	max_img = Image.fromarray(img_array)
+		
 		return (
-				proportion_of_color_rgb(img_array[cart_padding,cart_padding:width-cart_padding,:].reshape(1, horizontal_length, 3), attribute_stone_color) >= 0.5
-			and proportion_of_color_rgb(img_array[height-cart_padding-1,cart_padding:width-cart_padding,:].reshape(1, horizontal_length, 3), attribute_stone_color) >= 0.5
-			and proportion_of_color_rgb(img_array[cart_padding:height-cart_padding,cart_padding,:].reshape(1, vertical_length, 3),  attribute_stone_color) >= 0.5
-			and proportion_of_color_rgb(img_array[cart_padding:height-cart_padding,width-cart_padding-1,:].reshape(1, vertical_length, 3), attribute_stone_color) >= 0.5
+			(proportion_of_color_rgb(img_array[cart_padding,cart_padding:width-cart_padding,:].reshape(1, horizontal_length, 3), average_attribute_stone_color_top)
+			+ proportion_of_color_rgb(img_array[height-cart_padding-1,cart_padding:width-cart_padding,:].reshape(1, horizontal_length, 3), average_attribute_stone_color_bot)
+			+ proportion_of_color_rgb(img_array[cart_padding:height-cart_padding,cart_padding,:].reshape(1, vertical_length, 3),  average_attribute_stone_color_left)
+			+ proportion_of_color_rgb(img_array[cart_padding:height-cart_padding,width-cart_padding-1,:].reshape(1, vertical_length, 3), average_attribute_stone_color_right))
+			>= item_edges_color_proportion_sum_threshold
 		)
 
-	item_id = start_item_id
+	item_id = 1
 
 	# first find the Attribute Stone because it spills on the edges, making item_span_directions return a false positive
 	for i in range(cart_height):
@@ -242,6 +276,12 @@ def scan_cart(cells_array, start_item_id=1):
 				break
 
 	if item_id == 1:
+		
+		# for a in tmp:
+		# 	print(a)
+		# max_img.show()
+		# exit(1)
+		
 		raise Exception("No Attribute Stone")
 	
 	def is_vital_good(i, j):
@@ -249,10 +289,11 @@ def scan_cart(cells_array, start_item_id=1):
 		height, width = img_array.shape[:1+1]
 		horizontal_length, vertical_length = width - cart_padding * 2, height - cart_padding * 2
 		return (
-				proportion_of_color_rgb(img_array[cart_padding,cart_padding:width-cart_padding,:].reshape(1, horizontal_length, 3), vital_goods_color) >= 0.5
-			and proportion_of_color_rgb(img_array[height-cart_padding-1,cart_padding:width-cart_padding,:].reshape(1, horizontal_length, 3), vital_goods_color) >= 0.5
-			and proportion_of_color_rgb(img_array[cart_padding:height-cart_padding,cart_padding,:].reshape(1, vertical_length, 3),  vital_goods_color) >= 0.5
-			and proportion_of_color_rgb(img_array[cart_padding:height-cart_padding,width-cart_padding-1,:].reshape(1, vertical_length, 3), vital_goods_color) >= 0.5
+			(proportion_of_color_rgb(img_array[cart_padding,cart_padding:width-cart_padding,:].reshape(1, horizontal_length, 3), average_vital_goods_color_top)
+			+ proportion_of_color_rgb(img_array[height-cart_padding-1,cart_padding:width-cart_padding,:].reshape(1, horizontal_length, 3), average_vital_goods_color_bot)
+			+ proportion_of_color_rgb(img_array[cart_padding:height-cart_padding,cart_padding,:].reshape(1, vertical_length, 3),  average_vital_goods_color_left)
+			+ proportion_of_color_rgb(img_array[cart_padding:height-cart_padding,width-cart_padding-1,:].reshape(1, vertical_length, 3), average_vital_goods_color_right))
+			>= item_edges_color_proportion_sum_threshold
 		)
 
 	found_vital_goods = False
@@ -401,7 +442,9 @@ def extract_items_from_cart_screenshot(screenshot_img_path, output_folder_path, 
 	screenshot_image_array = np.array(screenshot_image)
 	screenshot_image_array_height, screenshot_image_array_width, _ = screenshot_image_array.shape
 	
-	if proportion_of_color_rgb(screenshot_image_array[bottom_shade_coord[0]:,bottom_shade_coord[1]:screenshot_image_array_width-bottom_shade_coord[3],:], bottom_shade_color) < 0.5:
+	offset = proportion_of_color_rgb(screenshot_image_array[bottom_shade_coord[0]:,bottom_shade_coord[1]:screenshot_image_array_width-bottom_shade_coord[3],:], bottom_shade_color) < 0.5
+
+	if offset:
 		# screenshot may have been taken after a chest has been collected, in this case the cart and attribute stone storage is lower
 		cart_coords[:,:,0] += 79
 		attribute_stone_storage_coords[0,:,0] += 150
@@ -418,15 +461,30 @@ def extract_items_from_cart_screenshot(screenshot_img_path, output_folder_path, 
 
 	_extract_items_from_cart_screenshot(cart_cells_img, cart_cells_array, cart_padding, cart_items_info, cart_space, output_folder_path, trim, 1)
 	_extract_items_from_cart_screenshot(attribute_stone_storage_cells_img, attribute_stone_storage_cells_array, attribute_stone_storage_padding, attribute_stone_storage_items_info, attribute_stone_storage_space, output_folder_path, trim, len(cart_items_info)+1)
+	
+	if offset:
+		cart_coords[:,:,0] -= 79
+		attribute_stone_storage_coords[0,:,0] -= 150
+		attribute_stone_storage_coords[1:,:,0] -= 149
+		attribute_stone_storage_coords[0,:,2] += 1
+
 	return cart_items_info, cart_space, attribute_stone_storage_items_info, attribute_stone_storage_space
 
 def main():
 	folder_path = "assets/ss"
+	
+	# file_path = "26.png"
+	# extract_items_from_cart_screenshot(os.path.join(folder_path, file_path), os.path.join(folder_path, f"{os.path.splitext(os.path.basename(file_path))[0]}-items").replace("\\", "/"))
+	# return
+	
 	for file_path in os.listdir(folder_path):
 		if not file_path.endswith('.png'): continue
-		cart_img_path = os.path.join(folder_path, file_path)
+		cart_img_path = os.path.join(folder_path, file_path).replace("\\", "/")
 		output_folder_path = os.path.join(folder_path, f"{os.path.splitext(os.path.basename(file_path))[0]}-items").replace("\\", "/")
-		extract_items_from_cart_screenshot(cart_img_path, output_folder_path)
+		try:
+			extract_items_from_cart_screenshot(cart_img_path, output_folder_path)
+		except Exception as e:
+			print(f"{file_path} failed ({e})")
 
 if __name__ == "__main__":
 	main()
